@@ -26,9 +26,9 @@ R7. Rewrite smart_* tool descriptions to position as structural grep alternative
 R8. Replace `additionalProperties: true` on memory tool schemas with explicit parameter definitions.
 
 ## Success Criteria
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass
 - [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [ ] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)

@@ -7,11 +7,10 @@ import {
   TableNameRow,
   SchemaVersion,
   SdkSessionRecord,
-  ObservationRecord,
-  SessionSummaryRecord,
   UserPromptRecord,
   LatestPromptResult
 } from '../../types/database.js';
+import type { ObservationRow, SessionSummaryRow } from './types.js';
 import type { PendingMessageStore } from './PendingMessageStore.js';
 import { computeObservationContentHash, findDuplicateObservation } from './observations/store.js';
 
@@ -1240,14 +1239,14 @@ export class SessionStore {
   /**
    * Get a single observation by ID
    */
-  getObservationById(id: number): ObservationRecord | null {
+  getObservationById(id: number): ObservationRow | null {
     const stmt = this.db.prepare(`
       SELECT *
       FROM observations
       WHERE id = ?
     `);
 
-    return stmt.get(id) as ObservationRecord | undefined || null;
+    return stmt.get(id) as ObservationRow | undefined || null;
   }
 
   /**
@@ -1256,7 +1255,7 @@ export class SessionStore {
   getObservationsByIds(
     ids: number[],
     options: { orderBy?: 'date_desc' | 'date_asc'; limit?: number; project?: string; type?: string | string[]; concepts?: string | string[]; files?: string | string[] } = {}
-  ): ObservationRecord[] {
+  ): ObservationRow[] {
     if (ids.length === 0) return [];
 
     const { orderBy = 'date_desc', limit, project, type, concepts, files } = options;
@@ -1320,7 +1319,7 @@ export class SessionStore {
       ${limitClause}
     `);
 
-    return stmt.all(...params) as ObservationRecord[];
+    return stmt.all(...params) as ObservationRow[];
   }
 
   /**
@@ -1975,7 +1974,7 @@ export class SessionStore {
   getSessionSummariesByIds(
     ids: number[],
     options: { orderBy?: 'date_desc' | 'date_asc'; limit?: number; project?: string } = {}
-  ): SessionSummaryRecord[] {
+  ): SessionSummaryRow[] {
     if (ids.length === 0) return [];
 
     const { orderBy = 'date_desc', limit, project } = options;
@@ -1997,7 +1996,7 @@ export class SessionStore {
       ${limitClause}
     `);
 
-    return stmt.all(...params) as SessionSummaryRecord[];
+    return stmt.all(...params) as SessionSummaryRow[];
   }
 
   /**
@@ -2166,8 +2165,8 @@ export class SessionStore {
       ORDER BY up.created_at_epoch ASC
     `;
 
-    const observations = this.db.prepare(obsQuery).all(startEpoch, endEpoch, ...projectParams) as ObservationRecord[];
-    const sessions = this.db.prepare(sessQuery).all(startEpoch, endEpoch, ...projectParams) as SessionSummaryRecord[];
+    const observations = this.db.prepare(obsQuery).all(startEpoch, endEpoch, ...projectParams) as ObservationRow[];
+    const sessions = this.db.prepare(sessQuery).all(startEpoch, endEpoch, ...projectParams) as SessionSummaryRow[];
     const prompts = this.db.prepare(promptQuery).all(startEpoch, endEpoch, ...projectParams) as UserPromptRecord[];
 
     return {

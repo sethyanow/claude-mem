@@ -23,9 +23,9 @@ R4. Decompose WorkerService — lifecycle vs orchestration (R4 from parent)
 R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 
 ## Success Criteria
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (same count as before refactor)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (same count as before refactor)
 - [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [ ] WorkerService decomposed: lifecycle separated from session orchestration

@@ -6,14 +6,15 @@
  */
 
 import type { Database } from 'bun:sqlite';
-import type { ObservationRecord, SessionSummaryRecord, UserPromptRecord } from '../../../types/database.js';
+import type { UserPromptRecord } from '../../../types/database.js';
+import type { ObservationRow, SessionSummaryRow } from '../types.js';
 import { logger } from '../../../utils/logger.js';
 
 /**
  * Timeline result containing observations, sessions, and prompts within a time window
  */
 export interface TimelineResult {
-  observations: ObservationRecord[];
+  observations: ObservationRow[];
   sessions: Array<{
     id: number;
     memory_session_id: string;
@@ -171,8 +172,8 @@ export function getTimelineAroundObservation(
     ORDER BY up.created_at_epoch ASC
   `;
 
-  const observations = db.prepare(obsQuery).all(startEpoch, endEpoch, ...projectParams) as ObservationRecord[];
-  const sessions = db.prepare(sessQuery).all(startEpoch, endEpoch, ...projectParams) as SessionSummaryRecord[];
+  const observations = db.prepare(obsQuery).all(startEpoch, endEpoch, ...projectParams) as ObservationRow[];
+  const sessions = db.prepare(sessQuery).all(startEpoch, endEpoch, ...projectParams) as SessionSummaryRow[];
   const prompts = db.prepare(promptQuery).all(startEpoch, endEpoch, ...projectParams) as UserPromptRecord[];
 
   return {

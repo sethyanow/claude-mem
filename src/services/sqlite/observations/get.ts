@@ -5,20 +5,20 @@
 
 import { Database } from 'bun:sqlite';
 import { logger } from '../../../utils/logger.js';
-import type { ObservationRecord } from '../../../types/database.js';
 import type { GetObservationsByIdsOptions, ObservationSessionRow } from './types.js';
+import type { ObservationRow } from '../types.js';
 
 /**
  * Get a single observation by ID
  */
-export function getObservationById(db: Database, id: number): ObservationRecord | null {
+export function getObservationById(db: Database, id: number): ObservationRow | null {
   const stmt = db.prepare(`
     SELECT *
     FROM observations
     WHERE id = ?
   `);
 
-  return stmt.get(id) as ObservationRecord | undefined || null;
+  return stmt.get(id) as ObservationRow | undefined || null;
 }
 
 /**
@@ -28,7 +28,7 @@ export function getObservationsByIds(
   db: Database,
   ids: number[],
   options: GetObservationsByIdsOptions = {}
-): ObservationRecord[] {
+): ObservationRow[] {
   if (ids.length === 0) return [];
 
   const { orderBy = 'date_desc', limit, project, type, concepts, files } = options;
@@ -92,7 +92,7 @@ export function getObservationsByIds(
     ${limitClause}
   `);
 
-  return stmt.all(...params) as ObservationRecord[];
+  return stmt.all(...params) as ObservationRow[];
 }
 
 /**

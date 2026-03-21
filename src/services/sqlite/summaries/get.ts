@@ -3,8 +3,8 @@
  */
 import type { Database } from 'bun:sqlite';
 import { logger } from '../../../utils/logger.js';
-import type { SessionSummaryRecord } from '../../../types/database.js';
 import type { SessionSummary, GetByIdsOptions } from './types.js';
+import type { SessionSummaryRow } from '../types.js';
 
 /**
  * Get summary for a specific session
@@ -41,12 +41,12 @@ export function getSummaryForSession(
 export function getSummaryById(
   db: Database,
   id: number
-): SessionSummaryRecord | null {
+): SessionSummaryRow | null {
   const stmt = db.prepare(`
     SELECT * FROM session_summaries WHERE id = ?
   `);
 
-  return (stmt.get(id) as SessionSummaryRecord | undefined) || null;
+  return (stmt.get(id) as SessionSummaryRow | undefined) || null;
 }
 
 /**
@@ -61,7 +61,7 @@ export function getSummariesByIds(
   db: Database,
   ids: number[],
   options: GetByIdsOptions = {}
-): SessionSummaryRecord[] {
+): SessionSummaryRow[] {
   if (ids.length === 0) return [];
 
   const { orderBy = 'date_desc', limit, project } = options;
@@ -83,5 +83,5 @@ export function getSummariesByIds(
     ${limitClause}
   `);
 
-  return stmt.all(...params) as SessionSummaryRecord[];
+  return stmt.all(...params) as SessionSummaryRow[];
 }
