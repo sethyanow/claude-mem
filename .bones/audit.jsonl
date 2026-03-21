@@ -9,3 +9,4 @@
 {"timestamp":"2026-03-21T20:23:54.420955+00:00","actor":"Seth","event_type":"created","task_id":"clmem-x2a","details":{}}
 {"timestamp":"2026-03-21T20:23:58.204496+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"parent-child","to":"clmem-x2a"}}
 {"timestamp":"2026-03-21T20:23:58.204958+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"blocks","to":"clmem-x2a"}}
+{"timestamp":"2026-03-21T20:37:18.902806+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-x2a","details":{"status":"active"}}

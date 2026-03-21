@@ -60,6 +60,7 @@ export interface SdkSessionRecord {
 
 /**
  * Observation database record
+ * Fields match ObservationRow in src/services/sqlite/types.ts
  */
 export interface ObservationRecord {
   id: number;
@@ -67,17 +68,22 @@ export interface ObservationRecord {
   project: string;
   text: string | null;
   type: 'decision' | 'bugfix' | 'feature' | 'refactor' | 'discovery' | 'change';
+  title: string | null;
+  subtitle: string | null;
+  facts: string | null;
+  narrative: string | null;
+  concepts: string | null;
+  files_read: string | null;
+  files_modified: string | null;
+  prompt_number: number | null;
+  discovery_tokens: number;
   created_at: string;
   created_at_epoch: number;
-  title?: string;
-  concept?: string;
-  source_files?: string;
-  prompt_number?: number;
-  discovery_tokens?: number;
 }
 
 /**
  * Session Summary database record
+ * Fields match SessionSummaryRow in src/services/sqlite/types.ts
  */
 export interface SessionSummaryRecord {
   id: number;
@@ -88,10 +94,13 @@ export interface SessionSummaryRecord {
   learned: string | null;
   completed: string | null;
   next_steps: string | null;
+  files_read: string | null;
+  files_edited: string | null;
+  notes: string | null;
+  prompt_number: number | null;
+  discovery_tokens: number;
   created_at: string;
   created_at_epoch: number;
-  prompt_number?: number;
-  discovery_tokens?: number;
 }
 
 /**
@@ -129,11 +138,15 @@ export interface ObservationWithContext {
   project: string;
   text: string | null;
   type: string;
+  title: string | null;
+  subtitle: string | null;
+  facts: string | null;
+  narrative: string | null;
+  concepts: string | null;
+  files_read: string | null;
+  files_modified: string | null;
+  prompt_number: number | null;
+  discovery_tokens: number;
   created_at: string;
   created_at_epoch: number;
-  title?: string;
-  concept?: string;
-  source_files?: string;
-  prompt_number?: number;
-  discovery_tokens?: number;
 }

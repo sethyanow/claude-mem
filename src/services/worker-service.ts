@@ -22,6 +22,7 @@ import { ChromaMcpManager } from './sync/ChromaMcpManager.js';
 import { ChromaSync } from './sync/ChromaSync.js';
 import { configureSupervisorSignalHandlers, getSupervisor, startSupervisor } from '../supervisor/index.js';
 import { sanitizeEnv } from '../supervisor/env-sanitizer.js';
+import type { WorkerRef } from './worker/agents/types.js';
 
 // Windows: avoid repeated spawn popups when startup fails (issue #921)
 const WINDOWS_SPAWN_COOLDOWN_MS = 2 * 60 * 1000;
@@ -188,6 +189,14 @@ export class WorkerService {
 
   // Stale session reaper interval (Issue #1168)
   private staleSessionReaperInterval: ReturnType<typeof setInterval> | null = null;
+
+  /** Type-safe view of this WorkerService as a WorkerRef for agent calls */
+  get workerRef(): WorkerRef {
+    return {
+      sseBroadcaster: this.sseBroadcaster,
+      broadcastProcessingStatus: () => this.broadcastProcessingStatus()
+    };
+  }
 
   // AI interaction tracking for health endpoint
   private lastAiInteraction: {
@@ -566,7 +575,7 @@ export class WorkerService {
     // Track generator activity for stale detection (Issue #1099)
     session.lastGeneratorActivity = Date.now();
 
-    session.generatorPromise = agent.startSession(session, this)
+    session.generatorPromise = agent.startSession(session, this.workerRef)
       .catch(async (error: unknown) => {
         const errorMessage = (error as Error)?.message || '';
 
@@ -749,7 +758,7 @@ export class WorkerService {
 
     if (isGeminiAvailable()) {
       try {
-        await this.geminiAgent.startSession(session, this);
+        await this.geminiAgent.startSession(session, this.workerRef);
         return;
       } catch (e) {
         logger.warn('SDK', 'Fallback Gemini failed, trying OpenRouter', {
@@ -761,7 +770,7 @@ export class WorkerService {
 
     if (isOpenRouterAvailable()) {
       try {
-        await this.openRouterAgent.startSession(session, this);
+        await this.openRouterAgent.startSession(session, this.workerRef);
         return;
       } catch (e) {
         logger.warn('SDK', 'Fallback OpenRouter failed', {

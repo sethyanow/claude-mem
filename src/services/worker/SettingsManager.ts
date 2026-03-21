@@ -35,9 +35,8 @@ export class SettingsManager {
 
       const settings: ViewerSettings = { ...this.defaultSettings };
       for (const row of rows) {
-        const key = row.key as keyof ViewerSettings;
-        if (key in settings) {
-          settings[key] = JSON.parse(row.value) as ViewerSettings[typeof key];
+        if (row.key in this.defaultSettings) {
+          Object.assign(settings, { [row.key]: JSON.parse(row.value) });
         }
       }
 

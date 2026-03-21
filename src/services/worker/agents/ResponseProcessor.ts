@@ -244,7 +244,7 @@ async function syncAndBroadcastObservations(
   const settings = SettingsDefaultsManager.loadFromFile(USER_SETTINGS_PATH);
   // Handle both string 'true' and boolean true from JSON settings
   const settingValue = settings.CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED;
-  const folderClaudeMdEnabled = settingValue === 'true' || settingValue === true;
+  const folderClaudeMdEnabled = settingValue === 'true';
 
   if (folderClaudeMdEnabled) {
     const allFilePaths: string[] = [];
