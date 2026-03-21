@@ -9,6 +9,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 First task in Phase 1 (clmem-l6j) of the refactor epic (clmem-cj3). Must land before structural decomposition tasks — those will create/move files and having a clean type baseline prevents cascading type errors during refactoring.
 
@@ -100,3 +101,7 @@ R5. Fix TypeScript type system for Bun: configure tsconfig with bun-types, fix a
 - Betrayal: An agent fixing 300 errors across 63 files in a single pass will lose track of which changes are purely type-level and which touch runtime behavior. A null guard like `if (x != null)` changes control flow.
 - Consequence: "Type-only" changes silently alter runtime behavior in a subset of fixes
 - Mitigation: For each fix category, establish the pattern once (e.g., "null guards use early return, not conditional wrapping"), then apply mechanically. Tests are the proof of no behavior change.
+
+## Log
+
+- [2026-03-21T21:06:50Z] [Seth] Debrief: Fixed 300 tsc errors across 63 files. Key: bun-types + DOM lib (tsconfig), Component union widened with 16 literals, ObservationRecord/SessionSummaryRecord aligned with actual DB schema, WorkerRef getter added to WorkerService, bun:sqlite .all()/.get() typed with assertions, scattered fixes across 12 more files. Global tsc is v4.9.5 (misleading), project-local is v5.9.3 (correct). Reflections: Skeleton underestimated scope (claimed 50+ errors, actual 300). Global vs local tsc discovery was critical — without it, agent could declare false success. ObservationRecord was stale (had concept singular vs concepts plural), not just a type mismatch — indicates types/database.ts drifted from services/sqlite/types.ts. sanitizeEnv return type was ProcessEnv despite filtering undefined values — narrowed to Record<string, string>.
