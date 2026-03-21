@@ -10,6 +10,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 First task in Phase 1 (clmem-l6j) of the refactor epic (clmem-cj3). Must land before structural decomposition tasks — those will create/move files and having a clean type baseline prevents cascading type errors during refactoring.
 
@@ -101,3 +102,4 @@ Two distinct types exist: `ObservationRecord` in `src/types/database.ts` (11 fie
 ## Log
 
 - [2026-03-21T22:22:07Z] [Seth] Fixed all 282 tsc --noEmit errors. Phase A: added bun-types + dom/dom.iterable to tsconfig (resolved 128 errors). Phase B: added 16 missing Component type literals (resolved 136 errors). Phase C: changed ObservationRecord→ObservationRow and SessionSummaryRecord→SessionSummaryRow in sqlite layer for correct SELECT * typing, fixed WorkerService sseBroadcaster visibility, fixed sanitizeEnv return type (resolved remaining 18 errors). All 282→0 errors. Build succeeds, 1156 tests pass unchanged.
+- [2026-03-21T22:24:04Z] [Seth] Debrief: Fixed 282 tsc errors in 3 phases (tsconfig, Component union, structural type alignment). Phase A resolved 128 errors including all DOM/browser issues — Phases D-E were unnecessary. Changed sqlite layer from ObservationRecord to ObservationRow for correct SELECT * typing. Reflections: Original skeleton was wildly inaccurate (50+ vs 282, wrong root causes); SRE caught this. User corrected rg usage — LSP only. Scoped next task clmem-a4z (BaseAgent extraction) but LSP was down during planning — SRE must verify with working LSP.
