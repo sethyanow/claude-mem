@@ -1,0 +1,11 @@
+{"timestamp":"2026-03-21T20:21:36.519061+00:00","actor":"Seth","event_type":"created","task_id":"clmem-cj3","details":{}}
+{"timestamp":"2026-03-21T20:23:03.018052+00:00","actor":"Seth","event_type":"created","task_id":"clmem-l6j","details":{}}
+{"timestamp":"2026-03-21T20:23:03.497132+00:00","actor":"Seth","event_type":"created","task_id":"clmem-jmj","details":{}}
+{"timestamp":"2026-03-21T20:23:08.737060+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"parent-child","to":"clmem-l6j"}}
+{"timestamp":"2026-03-21T20:23:08.737765+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"blocks","to":"clmem-l6j"}}
+{"timestamp":"2026-03-21T20:23:08.755981+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"parent-child","to":"clmem-jmj"}}
+{"timestamp":"2026-03-21T20:23:08.756436+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"blocks","to":"clmem-jmj"}}
+{"timestamp":"2026-03-21T20:23:08.774150+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-jmj","details":{"kind":"blocks","to":"clmem-l6j"}}
+{"timestamp":"2026-03-21T20:23:54.420955+00:00","actor":"Seth","event_type":"created","task_id":"clmem-x2a","details":{}}
+{"timestamp":"2026-03-21T20:23:58.204496+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"parent-child","to":"clmem-x2a"}}
+{"timestamp":"2026-03-21T20:23:58.204958+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"blocks","to":"clmem-x2a"}}
