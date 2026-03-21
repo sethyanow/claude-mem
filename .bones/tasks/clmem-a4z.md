@@ -1,10 +1,11 @@
 ---
 id: clmem-a4z
 title: Extract BaseAgent with shared session lifecycle from SDKAgent, GeminiAgent, OpenRouterAgent
-status: open
+status: active
 type: task
 parent: clmem-l6j
 ---
+
 
 
 ## Context
@@ -105,3 +106,5 @@ The 3 agents share constructor + property storage but their `startSession` imple
 - SDKAgent is significantly more complex than Gemini/OpenRouter (Claude SDK vs simple HTTP APIs) — the base class should be shaped by the simpler agents' patterns, not SDKAgent's full complexity
 - `WorkerRef` interface was fixed in clmem-x2a (sseBroadcaster now public) — BaseAgent can safely accept WorkerRef
 - LSP inventory verified 2026-03-21: agents share constructor/properties but `startSession` implementations are architecturally different. BaseAgent will be thin (constructor + abstract startSession). Future `BaseHttpAgent` could extract the Gemini/OpenRouter multi-turn loop pattern.
+- conversationHistory asymmetry: GeminiAgent pushes assistant responses to history, OpenRouterAgent has equivalent pushes commented out. BaseAgent MUST NOT normalize this — it's a behavioral difference that belongs in concrete agents.
+- SRE re-verified 2026-03-21 (fresh session): constructor sigs identical (LSP hover), test baseline 1156 pass / 34 fail pre-existing, tsc clean.

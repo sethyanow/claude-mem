@@ -27,6 +27,7 @@ import {
   type WorkerRef,
   type FallbackAgent
 } from './agents/index.js';
+import { BaseAgent } from './agents/BaseAgent.js';
 
 // Gemini API endpoint — use v1 (stable), not v1beta.
 // v1beta does not support newer models like gemini-3-flash.
@@ -106,14 +107,11 @@ interface GeminiContent {
   parts: Array<{ text: string }>;
 }
 
-export class GeminiAgent {
-  private dbManager: DatabaseManager;
-  private sessionManager: SessionManager;
+export class GeminiAgent extends BaseAgent {
   private fallbackAgent: FallbackAgent | null = null;
 
   constructor(dbManager: DatabaseManager, sessionManager: SessionManager) {
-    this.dbManager = dbManager;
-    this.sessionManager = sessionManager;
+    super(dbManager, sessionManager);
   }
 
   /**

@@ -21,6 +21,7 @@ import { buildIsolatedEnv, getAuthMethodDescription } from '../../shared/EnvMana
 import type { ActiveSession, SDKUserMessage } from '../worker-types.js';
 import { ModeManager } from '../domain/ModeManager.js';
 import { processAgentResponse, type WorkerRef } from './agents/index.js';
+import { BaseAgent } from './agents/BaseAgent.js';
 import { createPidCapturingSpawn, getProcessBySession, ensureProcessExit, waitForSlot } from './ProcessRegistry.js';
 import { sanitizeEnv } from '../../supervisor/env-sanitizer.js';
 
@@ -28,13 +29,9 @@ import { sanitizeEnv } from '../../supervisor/env-sanitizer.js';
 // @ts-ignore - Agent SDK types may not be available
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
-export class SDKAgent {
-  private dbManager: DatabaseManager;
-  private sessionManager: SessionManager;
-
+export class SDKAgent extends BaseAgent {
   constructor(dbManager: DatabaseManager, sessionManager: SessionManager) {
-    this.dbManager = dbManager;
-    this.sessionManager = sessionManager;
+    super(dbManager, sessionManager);
   }
 
   /**

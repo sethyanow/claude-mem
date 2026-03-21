@@ -27,6 +27,7 @@ import {
   type FallbackAgent,
   type WorkerRef
 } from './agents/index.js';
+import { BaseAgent } from './agents/BaseAgent.js';
 
 // OpenRouter API endpoint
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -61,14 +62,11 @@ interface OpenRouterResponse {
   };
 }
 
-export class OpenRouterAgent {
-  private dbManager: DatabaseManager;
-  private sessionManager: SessionManager;
+export class OpenRouterAgent extends BaseAgent {
   private fallbackAgent: FallbackAgent | null = null;
 
   constructor(dbManager: DatabaseManager, sessionManager: SessionManager) {
-    this.dbManager = dbManager;
-    this.sessionManager = sessionManager;
+    super(dbManager, sessionManager);
   }
 
   /**
