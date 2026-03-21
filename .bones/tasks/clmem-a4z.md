@@ -1,10 +1,11 @@
 ---
 id: clmem-a4z
 title: Extract BaseAgent with shared session lifecycle from SDKAgent, GeminiAgent, OpenRouterAgent
-status: active
+status: closed
 type: task
 parent: clmem-l6j
 ---
+
 
 
 
@@ -85,14 +86,14 @@ Run full test suite. Run `npm run build-and-sync`. Verify no behavior changes.
 The 3 agents share constructor + property storage but their `startSession` implementations are fundamentally different (SDK uses Agent SDK, Gemini/OpenRouter use HTTP multi-turn loops). BaseAgent extracts the constructor pattern and declares `startSession` as abstract. The multi-turn loop shared between Gemini/OpenRouter could be extracted into a `BaseHttpAgent extends BaseAgent` in a future task, but that's out of scope — this task extracts only what all 3 share.
 
 ## Success Criteria
-- [ ] `BaseAgent` abstract class exists at `src/services/worker/agents/BaseAgent.ts`
-- [ ] SDKAgent, GeminiAgent, OpenRouterAgent extend BaseAgent
-- [ ] Concrete agents contain ONLY provider-specific logic (API calls, config loading, response parsing)
-- [ ] Shared lifecycle methods live in BaseAgent (no duplication across agents)
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (1156 passes maintained)
-- [ ] No runtime behavior changes — agents behave identically to before
+- [x] `BaseAgent` abstract class exists at `src/services/worker/agents/BaseAgent.ts`
+- [x] SDKAgent, GeminiAgent, OpenRouterAgent extend BaseAgent
+- [x] Concrete agents contain ONLY provider-specific logic (API calls, config loading, response parsing)
+- [x] Shared lifecycle methods live in BaseAgent (no duplication across agents)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (1160 pass — 1156 baseline + 4 new BaseAgent tests; 34 pre-existing failures unchanged)
+- [x] No runtime behavior changes — agents behave identically to before
 
 ## Anti-Patterns
 - NO adding DI containers, factories, or registries — simple class inheritance

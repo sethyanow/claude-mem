@@ -32,7 +32,7 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [ ] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
-- [ ] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
+- [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
 - [ ] No `additionalProperties: true` on MCP memory tool schemas
 - [ ] `__IMPORTANT` tool removed from MCP server
 - [ ] smart_* tool descriptions reference LSP as primary, position self as fallback

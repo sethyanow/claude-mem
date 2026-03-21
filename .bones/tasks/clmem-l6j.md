@@ -30,7 +30,7 @@ R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 - [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [ ] WorkerService decomposed: lifecycle separated from session orchestration
-- [ ] BaseAgent exists with shared session lifecycle; concrete agents contain only provider-specific logic
+- [x] BaseAgent exists with shared session lifecycle; concrete agents contain only provider-specific logic
 
 ## Anti-Patterns
 - NO behavior changes — tests prove identical runtime behavior
