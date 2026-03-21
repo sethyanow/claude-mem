@@ -10,6 +10,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Third task in Phase 1 (clmem-l6j). Blocked by clmem-a4z (BaseAgent extraction, closed). WorkerService is 1,251 lines mixing lifecycle management (start/stop/signals/init) with session processing (agent selection, queue draining, fallback handling).
 
@@ -179,3 +180,4 @@ Run full test suite. Run `npm run build-and-sync`. Verify `wc -l` on both files.
 ## Log
 
 - [2026-03-21T23:13:42Z] [Seth] SRE review (fresh session). 5 findings fixed in skeleton: (1) missing sessionEventBroadcaster dependency, (2) missing broadcastProcessingStatus callback dependency, (3) WorkerRef passthrough gap for agent.startSession calls, (4) vacuous WorkerRef type compliance warning (optional properties), (5) stale test count updated to 1163/34/3. Adversarial planning added 3 failure catalog entries: dynamic import path shift (CRITICAL — tsc won't catch), construction timing, shutdown callback race. New success criterion added for dynamic import verification. Anti-patterns strengthened with WorkerRef and broadcastProcessingStatus duplication prohibitions.
+- [2026-03-21T23:29:59Z] [Seth] Debrief: Clean extraction, no workarounds. broadcastProcessingStatus injected as arrow callback, WorkerService passed as WorkerRef. Removed unnecessary worker-service.js mock from test to fix mock bleed. Changed ActiveSession|null type annotation. Reflections: SRE caught all design concerns pre-implementation (WorkerRef passthrough, dynamic import paths, missing deps). Steps 6+7 combined due to co-dependency. Mock bleed was only surprise. Deps interface pattern reusable for SessionStore/SearchManager.
