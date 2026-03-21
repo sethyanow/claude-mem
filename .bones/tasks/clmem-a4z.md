@@ -9,6 +9,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Second task in Phase 1 (clmem-l6j). Blocked by clmem-x2a (type system fix, now closed). Type baseline is clean — `tsc --noEmit` exits 0.
 
@@ -109,3 +110,7 @@ The 3 agents share constructor + property storage but their `startSession` imple
 - LSP inventory verified 2026-03-21: agents share constructor/properties but `startSession` implementations are architecturally different. BaseAgent will be thin (constructor + abstract startSession). Future `BaseHttpAgent` could extract the Gemini/OpenRouter multi-turn loop pattern.
 - conversationHistory asymmetry: GeminiAgent pushes assistant responses to history, OpenRouterAgent has equivalent pushes commented out. BaseAgent MUST NOT normalize this — it's a behavioral difference that belongs in concrete agents.
 - SRE re-verified 2026-03-21 (fresh session): constructor sigs identical (LSP hover), test baseline 1156 pass / 34 fail pre-existing, tsc clean.
+
+## Log
+
+- [2026-03-21T22:47:29Z] [Seth] Debrief: BaseAgent extracted cleanly. 25-line abstract class with constructor + abstract startSession. All 3 agents extend it. No workarounds needed. Logger import added for project convention test. 7 tests (4 core + 3 adversarial). Full suite: 1160 pass / 34 pre-existing fail. build-and-sync success. Reflections: skeleton matched reality exactly. No surprises. No user corrections. No cross-pollination. No memory updates needed. Next task: WorkerService decomposition (lifecycle vs orchestration, 1251 lines) — scoping blocked by LSP outage.
