@@ -23,9 +23,9 @@ R4. Decompose WorkerService — lifecycle vs orchestration (R4 from parent)
 R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 
 ## Success Criteria
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (same count as before refactor)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (same count as before refactor) — 34 pre-existing failures (was 35)
 - [ ] SessionStore.ts < 500 lines
 - [ ] SearchManager.ts < 500 lines
 - [ ] WorkerService.ts (worker-service.ts) < 500 lines

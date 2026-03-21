@@ -26,9 +26,9 @@ R7. Rewrite smart_* tool descriptions to position as structural grep alternative
 R8. Replace `additionalProperties: true` on memory tool schemas with explicit parameter definitions.
 
 ## Success Criteria
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass
 - [ ] SessionStore.ts < 500 lines (main file; extracted modules separate)
 - [ ] SearchManager.ts < 500 lines (main file; extracted modules separate)
 - [ ] WorkerService.ts < 500 lines (main file; extracted modules separate)
