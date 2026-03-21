@@ -34,3 +34,6 @@
 {"timestamp":"2026-03-21T23:13:46.381822+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-v9b","details":{"status":"active"}}
 {"timestamp":"2026-03-21T23:28:01.985727+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-v9b","details":{"notes":null}}
 {"timestamp":"2026-03-21T23:29:59.480757+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-v9b","details":{"message":"Debrief: Clean extraction, no workarounds. broadcastProcessingStatus injected as arrow callback, WorkerService passed as WorkerRef. Removed unnecessary worker-service.js mock from test to fix mock bleed. Changed ActiveSession|null type annotation. Reflections: SRE caught all design concerns pre-implementation (WorkerRef passthrough, dynamic import paths, missing deps). Steps 6+7 combined due to co-dependency. Mock bleed was only surprise. Deps interface pattern reusable for SessionStore/SearchManager."}}
+{"timestamp":"2026-03-21T23:37:06.633597+00:00","actor":"Seth","event_type":"created","task_id":"clmem-luq","details":{}}
+{"timestamp":"2026-03-21T23:37:09.762976+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"parent-child","to":"clmem-luq"}}
+{"timestamp":"2026-03-21T23:37:09.763414+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"blocks","to":"clmem-luq"}}
