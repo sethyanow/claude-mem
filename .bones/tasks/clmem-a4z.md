@@ -9,6 +9,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Second task in Phase 1 (clmem-l6j). Blocked by: none (clmem-x2a closed — type system clean). Unlocks: R1 complete, all 3 agents < 200 lines, BaseAgent.ts exists. Independent of R2-R4 (god class splits).
 
@@ -84,16 +85,16 @@ R1. Extract `BaseAgent` with shared session lifecycle from SDKAgent, OpenRouterA
 13. **Run `npm run build-and-sync` — must succeed**
 
 ## Success Criteria
-- [ ] BaseAgent.ts exists at `src/services/worker/BaseAgent.ts` with shared session lifecycle
-- [ ] BaseAgent contains 2+ shared protected methods (not just constructor + abstract startSession)
-- [ ] SDKAgent.ts < 200 lines, extends BaseAgent (if unreachable due to SDK-specific code volume, escalate with evidence — do not weaken criterion silently)
-- [ ] GeminiAgent.ts < 200 lines, extends BaseAgent
-- [ ] OpenRouterAgent.ts < 200 lines, extends BaseAgent
-- [ ] `npx tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (34 pre-existing failures baseline)
-- [ ] No runtime behavior changes (tests prove equivalence)
-- [ ] BaseAgent tests verify shared behavior (prompt building, message processing delegation), not just class structure
+- [x] BaseAgent.ts exists at `src/services/worker/BaseAgent.ts` with shared session lifecycle
+- [x] BaseAgent contains 2+ shared protected methods (not just constructor + abstract startSession) — has buildSessionPrompt, buildObsPrompt, buildSumPrompt
+- [ ] SDKAgent.ts < 200 lines, extends BaseAgent — **ESCALATED**: 409 lines. ~350+ lines genuinely SDK-specific (subprocess, event stream, PID, resume). Extracted findClaudeExecutable+getModelId to SDKUtils.ts. Remaining code is irreducible without new abstractions.
+- [ ] GeminiAgent.ts < 200 lines, extends BaseAgent — **ESCALATED**: 242 lines. Extracted types/config/query/rate-limiting to GeminiUtils.ts. Remaining code is the session loop which differs from OpenRouter (conversationHistory push behavior).
+- [ ] OpenRouterAgent.ts < 200 lines, extends BaseAgent — **ESCALATED**: 228 lines. Extracted types/config/query/truncation to OpenRouterUtils.ts. Remaining code is the session loop with commented-out conversationHistory pushes.
+- [x] `npx tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (34 pre-existing failures baseline)
+- [x] No runtime behavior changes (tests prove equivalence) — 34 pre-existing failures unchanged
+- [x] BaseAgent tests verify shared behavior (prompt building, message processing delegation), not just class structure — 8 tests covering init/continuation prompt, observation prompt, summary prompt
 
 ## Anti-Patterns
 - NO behavior changes — extract along natural seams, preserve identical runtime behavior
@@ -156,3 +157,4 @@ R1. Extract `BaseAgent` with shared session lifecycle from SDKAgent, OpenRouterA
 ## Log
 
 - [2026-03-21T21:34:12Z] [Seth] SRE Review Complete (fresh session). Key findings: (1) SDKAgent < 200 lines may be unreachable — has ~350+ lines genuinely SDK-specific code. Skeleton updated to escalate rather than silently weaken. (2) Agents don't share as much as originally claimed — SDKAgent event stream vs Gemini/OpenRouter REST loop are fundamentally different execution models. Shared surface is narrower: constructor, prompt building, processAgentResponse delegation. (3) conversationHistory asymmetry: GeminiAgent pushes assistant responses, OpenRouterAgent has all pushes commented out — BaseAgent MUST NOT normalize this. (4) Adversarial findings added: temporal betrayal (SDKAgent dual-use), state corruption (history asymmetry, field visibility), dependency treachery (error handling scope, empty-response handling differences). (5) Success criteria strengthened: added BaseAgent content verification, test behavior verification, escalation protocol for line count misses.
+- [2026-03-21T21:55:50Z] [Seth] Implementation complete. BaseAgent extracted with 3 shared methods. All 3 agents extend BaseAgent. SDK/Gemini/OpenRouter utilities extracted to separate files. All callers updated (no re-exports). 8 new BaseAgent tests pass. Full suite: 34 pre-existing failures unchanged. tsc clean. build-and-sync succeeds. Line counts: SDKAgent 409, GeminiAgent 242, OpenRouterAgent 228 — all over 200 target. Escalated: remaining code is genuinely provider-specific. SDKAgent has fundamentally different execution model (subprocess event stream). Gemini/OpenRouter share startSession loop structure but differ in conversationHistory management and empty-response handling — extracting the loop to BaseAgent would normalize these behavioral differences.

@@ -32,7 +32,7 @@ R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 - [ ] SearchManager.ts < 500 lines
 - [ ] WorkerService.ts (worker-service.ts) < 500 lines
 - [ ] SDKAgent.ts, OpenRouterAgent.ts, GeminiAgent.ts each < 200 lines
-- [ ] BaseAgent.ts exists with shared session lifecycle
+- [x] BaseAgent.ts exists with shared session lifecycle — 73 lines, 3 shared methods (buildSessionPrompt, buildObsPrompt, buildSumPrompt)
 
 ## Anti-Patterns
 - NO behavior changes — tests prove identical runtime behavior
