@@ -1,10 +1,11 @@
 ---
 id: clmem-v9b
 title: 'Decompose WorkerService: extract SessionOrchestrator from lifecycle coordination'
-status: active
+status: closed
 type: task
 parent: clmem-l6j
 ---
+
 
 
 
