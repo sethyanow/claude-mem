@@ -8,7 +8,13 @@
  * - Sync to database and Chroma
  */
 
+import { execSync } from 'child_process';
+import { homedir } from 'os';
+import path from 'path';
+import { DatabaseManager } from './DatabaseManager.js';
+import { SessionManager } from './SessionManager.js';
 import { logger } from '../../utils/logger.js';
+import { buildInitPrompt, buildObservationPrompt, buildSummaryPrompt, buildContinuationPrompt } from '../../sdk/prompts.js';
 import { SettingsDefaultsManager } from '../../shared/SettingsDefaultsManager.js';
 import { USER_SETTINGS_PATH, OBSERVER_SESSIONS_DIR, ensureDir } from '../../shared/paths.js';
 import { buildIsolatedEnv, getAuthMethodDescription } from '../../shared/EnvManager.js';
@@ -17,14 +23,19 @@ import { ModeManager } from '../domain/ModeManager.js';
 import { processAgentResponse, type WorkerRef } from './agents/index.js';
 import { createPidCapturingSpawn, getProcessBySession, ensureProcessExit, waitForSlot } from './ProcessRegistry.js';
 import { sanitizeEnv } from '../../supervisor/env-sanitizer.js';
-import { BaseAgent } from './BaseAgent.js';
-import { findClaudeExecutable, getModelId } from './SDKUtils.js';
 
 // Import Agent SDK (assumes it's installed)
 // @ts-ignore - Agent SDK types may not be available
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
-export class SDKAgent extends BaseAgent {
+export class SDKAgent {
+  private dbManager: DatabaseManager;
+  private sessionManager: SessionManager;
+
+  constructor(dbManager: DatabaseManager, sessionManager: SessionManager) {
+    this.dbManager = dbManager;
+    this.sessionManager = sessionManager;
+  }
 
   /**
    * Start SDK agent for a session (event-driven, no polling)
@@ -36,10 +47,10 @@ export class SDKAgent extends BaseAgent {
     const cwdTracker = { lastCwd: undefined as string | undefined };
 
     // Find Claude executable
-    const claudePath = findClaudeExecutable();
+    const claudePath = this.findClaudeExecutable();
 
     // Get model ID and disallowed tools
-    const modelId = getModelId();
+    const modelId = this.getModelId();
     // Memory agent is OBSERVER ONLY - no tools allowed
     const disallowedTools = [
       'Bash',           // Prevent infinite loops
@@ -336,7 +347,9 @@ export class SDKAgent extends BaseAgent {
       promptType: isInitPrompt ? 'INIT' : 'CONTINUATION'
     });
 
-    const initPrompt = this.buildSessionPrompt(session, mode);
+    const initPrompt = isInitPrompt
+      ? buildInitPrompt(session.project, session.contentSessionId, session.userPrompt, mode)
+      : buildContinuationPrompt(session.userPrompt, session.lastPromptNumber, session.contentSessionId, mode);
 
     // Add to shared conversation history for provider interop
     session.conversationHistory.push({ role: 'user', content: initPrompt });
@@ -371,7 +384,14 @@ export class SDKAgent extends BaseAgent {
           session.lastPromptNumber = message.prompt_number;
         }
 
-        const obsPrompt = this.buildObsPrompt(message);
+        const obsPrompt = buildObservationPrompt({
+          id: 0, // Not used in prompt
+          tool_name: message.tool_name!,
+          tool_input: JSON.stringify(message.tool_input),
+          tool_output: JSON.stringify(message.tool_response),
+          created_at_epoch: Date.now(),
+          cwd: message.cwd
+        });
 
         // Add to shared conversation history for provider interop
         session.conversationHistory.push({ role: 'user', content: obsPrompt });
@@ -387,7 +407,13 @@ export class SDKAgent extends BaseAgent {
           isSynthetic: true
         };
       } else if (message.type === 'summarize') {
-        const summaryPrompt = this.buildSumPrompt(session, message, mode);
+        const summaryPrompt = buildSummaryPrompt({
+          id: session.sessionDbId,
+          memory_session_id: session.memorySessionId,
+          project: session.project,
+          user_prompt: session.userPrompt,
+          last_assistant_message: message.last_assistant_message || ''
+        }, mode);
 
         // Add to shared conversation history for provider interop
         session.conversationHistory.push({ role: 'user', content: summaryPrompt });
@@ -406,4 +432,58 @@ export class SDKAgent extends BaseAgent {
     }
   }
 
+  // ============================================================================
+  // Configuration Helpers
+  // ============================================================================
+
+  /**
+   * Find Claude executable (inline, called once per session)
+   */
+  private findClaudeExecutable(): string {
+    const settings = SettingsDefaultsManager.loadFromFile(USER_SETTINGS_PATH);
+
+    // 1. Check configured path
+    if (settings.CLAUDE_CODE_PATH) {
+      // Lazy load fs to keep startup fast
+      const { existsSync } = require('fs');
+      if (!existsSync(settings.CLAUDE_CODE_PATH)) {
+        throw new Error(`CLAUDE_CODE_PATH is set to "${settings.CLAUDE_CODE_PATH}" but the file does not exist.`);
+      }
+      return settings.CLAUDE_CODE_PATH;
+    }
+
+    // 2. On Windows, prefer "claude.cmd" via PATH to avoid spawn issues with spaces in paths
+    if (process.platform === 'win32') {
+      try {
+        execSync('where claude.cmd', { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+        return 'claude.cmd'; // Let Windows resolve via PATHEXT
+      } catch {
+        // Fall through to generic error
+      }
+    }
+
+    // 3. Try auto-detection for non-Windows platforms
+    try {
+      const claudePath = execSync(
+        process.platform === 'win32' ? 'where claude' : 'which claude',
+        { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }
+      ).trim().split('\n')[0].trim();
+
+      if (claudePath) return claudePath;
+    } catch (error) {
+      // [ANTI-PATTERN IGNORED]: Fallback behavior - which/where failed, continue to throw clear error
+      logger.debug('SDK', 'Claude executable auto-detection failed', {}, error as Error);
+    }
+
+    throw new Error('Claude executable not found. Please either:\n1. Add "claude" to your system PATH, or\n2. Set CLAUDE_CODE_PATH in ~/.claude-mem/settings.json');
+  }
+
+  /**
+   * Get model ID from settings or environment
+   */
+  private getModelId(): string {
+    const settingsPath = path.join(homedir(), '.claude-mem', 'settings.json');
+    const settings = SettingsDefaultsManager.loadFromFile(settingsPath);
+    return settings.CLAUDE_MEM_MODEL;
+  }
 }

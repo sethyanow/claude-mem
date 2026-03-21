@@ -6,8 +6,8 @@ export const ENV_EXACT_MATCHES = new Set([
   'MCP_SESSION_ID',
 ]);
 
-export function sanitizeEnv(env: NodeJS.ProcessEnv = process.env): Record<string, string> {
-  const sanitized: Record<string, string> = {};
+export function sanitizeEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const sanitized: NodeJS.ProcessEnv = {};
 
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) continue;

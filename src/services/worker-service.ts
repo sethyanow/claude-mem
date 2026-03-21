@@ -22,7 +22,6 @@ import { ChromaMcpManager } from './sync/ChromaMcpManager.js';
 import { ChromaSync } from './sync/ChromaSync.js';
 import { configureSupervisorSignalHandlers, getSupervisor, startSupervisor } from '../supervisor/index.js';
 import { sanitizeEnv } from '../supervisor/env-sanitizer.js';
-import type { WorkerRef } from './worker/agents/types.js';
 
 // Windows: avoid repeated spawn popups when startup fails (issue #921)
 const WINDOWS_SPAWN_COOLDOWN_MS = 2 * 60 * 1000;
@@ -108,10 +107,8 @@ import { DatabaseManager } from './worker/DatabaseManager.js';
 import { SessionManager } from './worker/SessionManager.js';
 import { SSEBroadcaster } from './worker/SSEBroadcaster.js';
 import { SDKAgent } from './worker/SDKAgent.js';
-import { GeminiAgent } from './worker/GeminiAgent.js';
-import { isGeminiSelected, isGeminiAvailable } from './worker/GeminiUtils.js';
-import { OpenRouterAgent } from './worker/OpenRouterAgent.js';
-import { isOpenRouterSelected, isOpenRouterAvailable } from './worker/OpenRouterUtils.js';
+import { GeminiAgent, isGeminiSelected, isGeminiAvailable } from './worker/GeminiAgent.js';
+import { OpenRouterAgent, isOpenRouterSelected, isOpenRouterAvailable } from './worker/OpenRouterAgent.js';
 import { PaginationHelper } from './worker/PaginationHelper.js';
 import { SettingsManager } from './worker/SettingsManager.js';
 import { SearchManager } from './worker/SearchManager.js';
@@ -191,14 +188,6 @@ export class WorkerService {
 
   // Stale session reaper interval (Issue #1168)
   private staleSessionReaperInterval: ReturnType<typeof setInterval> | null = null;
-
-  /** Type-safe view of this WorkerService as a WorkerRef for agent calls */
-  get workerRef(): WorkerRef {
-    return {
-      sseBroadcaster: this.sseBroadcaster,
-      broadcastProcessingStatus: () => this.broadcastProcessingStatus()
-    };
-  }
 
   // AI interaction tracking for health endpoint
   private lastAiInteraction: {
@@ -577,7 +566,7 @@ export class WorkerService {
     // Track generator activity for stale detection (Issue #1099)
     session.lastGeneratorActivity = Date.now();
 
-    session.generatorPromise = agent.startSession(session, this.workerRef)
+    session.generatorPromise = agent.startSession(session, this)
       .catch(async (error: unknown) => {
         const errorMessage = (error as Error)?.message || '';
 
@@ -760,7 +749,7 @@ export class WorkerService {
 
     if (isGeminiAvailable()) {
       try {
-        await this.geminiAgent.startSession(session, this.workerRef);
+        await this.geminiAgent.startSession(session, this);
         return;
       } catch (e) {
         logger.warn('SDK', 'Fallback Gemini failed, trying OpenRouter', {
@@ -772,7 +761,7 @@ export class WorkerService {
 
     if (isOpenRouterAvailable()) {
       try {
-        await this.openRouterAgent.startSession(session, this.workerRef);
+        await this.openRouterAgent.startSession(session, this);
         return;
       } catch (e) {
         logger.warn('SDK', 'Fallback OpenRouter failed', {

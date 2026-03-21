@@ -12,12 +12,9 @@ import { stripMemoryTagsFromJson, stripMemoryTagsFromPrompt } from '../../../../
 import { SessionManager } from '../../SessionManager.js';
 import { DatabaseManager } from '../../DatabaseManager.js';
 import { SDKAgent } from '../../SDKAgent.js';
-import { GeminiAgent } from '../../GeminiAgent.js';
-import { isGeminiSelected, isGeminiAvailable } from '../../GeminiUtils.js';
-import { OpenRouterAgent } from '../../OpenRouterAgent.js';
-import { isOpenRouterSelected, isOpenRouterAvailable } from '../../OpenRouterUtils.js';
+import { GeminiAgent, isGeminiSelected, isGeminiAvailable } from '../../GeminiAgent.js';
+import { OpenRouterAgent, isOpenRouterSelected, isOpenRouterAvailable } from '../../OpenRouterAgent.js';
 import type { WorkerService } from '../../../worker-service.js';
-import type { WorkerRef } from '../../agents/types.js';
 import { BaseRouteHandler } from '../BaseRouteHandler.js';
 import { SessionEventBroadcaster } from '../../events/SessionEventBroadcaster.js';
 import { SessionCompletionHandler } from '../../session/SessionCompletionHandler.js';
@@ -184,7 +181,7 @@ export class SessionRoutes extends BaseRouteHandler {
     session.currentProvider = provider;
     session.lastGeneratorActivity = Date.now();
 
-    session.generatorPromise = agent.startSession(session, this.workerService.workerRef)
+    session.generatorPromise = agent.startSession(session, this.workerService)
       .catch(error => {
         // Only log non-abort errors
         if (session.abortController.signal.aborted) return;
