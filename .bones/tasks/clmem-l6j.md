@@ -4,9 +4,10 @@ title: 'Phase 1: Refactor God Classes & Type System'
 status: open
 type: epic
 priority: 1
-depends_on: [clmem-x2a]
+depends_on: [clmem-x2a, clmem-a4z]
 parent: clmem-cj3
 ---
+
 
 
 

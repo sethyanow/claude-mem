@@ -9,6 +9,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 First task in Phase 1 (clmem-l6j) of the refactor epic (clmem-cj3). Must land before structural decomposition tasks — those will create/move files and having a clean type baseline prevents cascading type errors during refactoring.
 
@@ -96,3 +97,7 @@ Two distinct types exist: `ObservationRecord` in `src/types/database.ts` (11 fie
 
 ### Pre-existing test failures (34)
 7 in `worker-json-status` (likely infrastructure/environment dependent), 27 in `MarkdownFormatter` (date-sensitive formatting). These are baseline — do not attempt to fix as part of this task. The success criterion is maintaining 1156 passes with no new failures.
+
+## Log
+
+- [2026-03-21T22:22:07Z] [Seth] Fixed all 282 tsc --noEmit errors. Phase A: added bun-types + dom/dom.iterable to tsconfig (resolved 128 errors). Phase B: added 16 missing Component type literals (resolved 136 errors). Phase C: changed ObservationRecord→ObservationRow and SessionSummaryRecord→SessionSummaryRow in sqlite layer for correct SELECT * typing, fixed WorkerService sseBroadcaster visibility, fixed sanitizeEnv return type (resolved remaining 18 errors). All 282→0 errors. Build succeeds, 1156 tests pass unchanged.
