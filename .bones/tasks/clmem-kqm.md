@@ -1,7 +1,7 @@
 ---
 id: clmem-kqm
 title: 'Fix worker-json-status test failure: empty stdout from worker start'
-status: active
+status: closed
 type: bug
 priority: 2
 owner: Seth
@@ -15,12 +15,13 @@ depends_on: [clmem-p1x]
 
 
 
+
 ## Context
 
 Upstream regression from PR #655 (`644cccd3`). 1 test fails in `tests/infrastructure/worker-json-status.test.ts` — `should output valid JSON with status: ready`. Worker start command outputs empty/truncated stdout instead of JSON (`JSON Parse error: Unexpected EOF`). Could be build-time output format change or subprocess exiting before writing. ~30 min investigation estimate.
 
 ## Success Criteria
-- [ ] `worker-json-status > start command JSON output > when worker already healthy > should output valid JSON with status: ready` passes
+- [x] `worker-json-status > start command JSON output > when worker already healthy > should output valid JSON with status: ready` passes
 
 ## Log
 

@@ -124,3 +124,5 @@
 {"timestamp":"2026-03-22T20:47:44.891710+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-kqm","details":{"kind":"blocks","to":"clmem-p1x"}}
 {"timestamp":"2026-03-22T20:48:45.537775+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-kqm","details":{"message":"Diagnosis complete. Fix task: clmem-p1x. Root cause: bare process.exit(0) at worker-service.ts:713 when plugin disabled — exitWithStatus hoisted but not called. Fix: call exitWithStatus('ready') for start command + CLAUDE_CONFIG_DIR isolation in test helper."}}
 {"timestamp":"2026-03-22T20:53:22.263130+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-p1x","details":{"status":"active"}}
+{"timestamp":"2026-03-22T21:01:11.727588+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-p1x","details":{"notes":null}}
+{"timestamp":"2026-03-22T21:01:36.688800+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-kqm","details":{"notes":null}}

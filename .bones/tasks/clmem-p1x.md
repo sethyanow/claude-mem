@@ -1,11 +1,12 @@
 ---
 id: clmem-p1x
 title: Fix worker start JSON output + test env isolation
-status: active
+status: closed
 type: task
 priority: 2
 parent: clmem-kqm
 ---
+
 
 
 
