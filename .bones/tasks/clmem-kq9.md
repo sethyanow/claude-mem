@@ -1,12 +1,14 @@
 ---
 id: clmem-kq9
 title: 'Decompose remaining SearchManager methods: search, timeline, getContextTimeline, getTimelineByQuery, findByFile'
-status: active
+status: closed
 type: task
 priority: 1
 owner: Seth
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -29,11 +31,11 @@ These methods don't fit the existing `QueryFirstConfig`/`MetadataFirstConfig` pa
 3. No behavior changes — identical runtime output
 
 ## Success Criteria
-- [ ] SearchManager < 500 lines (per Phase 1 gate)
-- [ ] Each extracted method's logic in its own module under `search/`
-- [ ] All existing tests pass
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
+- [x] SearchManager < 500 lines (per Phase 1 gate)
+- [x] Each extracted method's logic in its own module under `search/`
+- [x] All existing tests pass
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
 
 ## Implementation
 
@@ -76,3 +78,7 @@ Extraction order: simplest first, building confidence in the pattern before tack
 - **Null chromaSync.** Several methods check `this.chromaSync` for null before calling. The deps object must pass `chromaSync: ChromaSync | null`.
 - **Process.cwd() calls.** `search()`, `timeline()`, `getContextTimeline()`, `getTimelineByQuery()` call `process.cwd()`. These should remain as-is in extracted functions (NOT passed as a dep — they need the runtime cwd).
 - **Error return format.** `timeline()` returns `{ content: [{ type: 'text', text: '...' }], isError: true }` for validation failures. Ensure the extracted function preserves this exact format.
+
+## Log
+
+- [2026-03-22T15:43:33Z] [Seth] Extracted 5 methods (search, timeline, getContextTimeline, getTimelineByQuery, findByFile) into dedicated modules under search/. SearchManager 1550→499 lines. 13 delegation tests pass. tsc clean. build-and-sync succeeds.
