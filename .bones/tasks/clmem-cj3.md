@@ -38,7 +38,7 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass — 7 worker-json-status failures are pre-existing (clmem-kqm). Process-registry tests (clmem-g64) now pass (verified 2026-03-22).
-- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — migrations and imports delegated, but CRUD + queries (1605 lines) still inline. Extracted sub-modules orphaned with zero callers.
+- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — all 35 CRUD/query methods delegate to sub-modules. SessionStore is 570 lines (down from 1605). Sub-modules have callers.
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern — 8/13 methods use shared pattern. 5 complex methods (search, timeline, getContextTimeline, getTimelineByQuery, findByFile, ~1080 lines) still inline. Prior extraction attempt reverted.
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic

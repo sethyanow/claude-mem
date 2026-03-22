@@ -1,11 +1,13 @@
 ---
 id: clmem-xgk
 title: 'Complete SessionStore decomposition: delegate CRUD and queries to extracted modules'
-status: open
+status: closed
 type: task
 priority: 1
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -74,11 +76,11 @@ SessionStore has 39 methods (LSP-verified). The work is: refactor each method to
 4. SessionStore becomes a thin facade: constructor + delegation methods
 
 ## Success Criteria
-- [ ] No inline SQL in SessionStore (except constructor pragmas and `close()`) — all queries live in sub-modules. Verify: no `.prepare(` or `.run(` calls in SessionStore methods other than constructor/close.
-- [ ] All existing tests pass (1234 pass, 3 skip, 7 fail — the 7 failures are worker-json-status clmem-kqm, not caused by this task)
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] No orphaned extracted functions with zero callers (R3) — every function in `observations/`, `summaries/`, `sessions/`, `timeline/` sub-modules is called by SessionStore or another module
+- [x] No inline SQL in SessionStore (except constructor pragmas and `close()`) — all queries live in sub-modules. Verified: structural test passes, no `.prepare(` in methods.
+- [x] All existing tests pass (1236 pass, 3 skip, 7 fail — the 7 failures are worker-json-status clmem-kqm, not caused by this task. +2 from new structural test)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] No orphaned extracted functions with zero callers (R3) — all sub-module functions called by SessionStore. Transactional methods live in transactions.ts (pre-existing, called via barrel export).
 
 ## Anti-Patterns
 - NO behavior changes — delegation must preserve identical runtime behavior
