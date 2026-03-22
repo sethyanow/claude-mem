@@ -11,6 +11,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Fourth task in Phase 1 (clmem-l6j). SessionStore is 2,563 lines with 15 migration methods (~800 lines) called sequentially in the constructor. `MigrationRunner` already exists at `src/services/sqlite/migrations/runner.ts` (866 lines) with **identical copies** of all 15 methods plus `runAllMigrations()`.
 
@@ -120,3 +121,7 @@ Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on Sess
 - Betrayal: Two simultaneous constructions both call `addOnUpdateCascadeToForeignKeys`, which uses `PRAGMA foreign_keys = OFF` + `BEGIN TRANSACTION` — non-reentrant
 - Consequence: One instance's PRAGMA change affects the other's transaction
 - Mitigation: Pre-existing risk, not in scope. Document for future: SessionStore construction should be serialized (it already is via DatabaseManager.initialize())
+
+## Log
+
+- [2026-03-22T02:06:00Z] [Seth] Debrief: Deleted 841 lines of duplicate migration methods from SessionStore (2563→1722), delegating to MigrationRunner. SRE found Database.ts MigrationRunner usage was dead code (zero callers) — simplified the task significantly. Reflections: Skeleton overestimated complexity (investigation steps were pre-answered by SRE). No user corrections needed. Next task clmem-h4d scoped: delegate import methods to import/bulk.ts (same pattern, ~200 lines).
