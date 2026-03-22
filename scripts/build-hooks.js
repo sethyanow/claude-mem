@@ -150,7 +150,8 @@ async function buildHooks() {
         'tree-sitter-cpp',
       ],
       define: {
-        '__DEFAULT_PACKAGE_VERSION__': `"${version}"`
+        '__DEFAULT_PACKAGE_VERSION__': `"${version}"`,
+        'import.meta.main': 'true'
       },
       banner: {
         js: '#!/usr/bin/env node'

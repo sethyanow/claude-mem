@@ -148,48 +148,23 @@ async function verifyWorkerConnection(): Promise<boolean> {
  * Tool definitions with HTTP-based handlers
  * Minimal descriptions - use help() tool with operation parameter for detailed docs
  */
-const tools = [
-  {
-    name: '__IMPORTANT',
-    description: `3-LAYER WORKFLOW (ALWAYS FOLLOW):
-1. search(query) → Get index with IDs (~50-100 tokens/result)
-2. timeline(anchor=ID) → Get context around interesting results
-3. get_observations([IDs]) → Fetch full details ONLY for filtered IDs
-NEVER fetch full details without filtering first. 10x token savings.`,
-    inputSchema: {
-      type: 'object',
-      properties: {}
-    },
-    handler: async () => ({
-      content: [{
-        type: 'text' as const,
-        text: `# Memory Search Workflow
-
-**3-Layer Pattern (ALWAYS follow this):**
-
-1. **Search** - Get index of results with IDs
-   \`search(query="...", limit=20, project="...")\`
-   Returns: Table with IDs, titles, dates (~50-100 tokens/result)
-
-2. **Timeline** - Get context around interesting results
-   \`timeline(anchor=<ID>, depth_before=3, depth_after=3)\`
-   Returns: Chronological context showing what was happening
-
-3. **Fetch** - Get full details ONLY for relevant IDs
-   \`get_observations(ids=[...])\`  # ALWAYS batch for 2+ items
-   Returns: Complete details (~500-1000 tokens/result)
-
-**Why:** 10x token savings. Never fetch full details without filtering first.`
-      }]
-    })
-  },
+export const tools = [
   {
     name: 'search',
-    description: 'Step 1: Search memory. Returns index with IDs. Params: query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy',
+    description: 'Search memory. Returns index with IDs for use with timeline and get_observations. Params: query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy',
     inputSchema: {
       type: 'object',
-      properties: {},
-      additionalProperties: true
+      properties: {
+        query: { type: 'string', description: 'Search query text' },
+        limit: { type: 'number', description: 'Maximum results to return' },
+        project: { type: 'string', description: 'Filter by project name' },
+        type: { type: 'string', description: 'Filter by type: observations, sessions, prompts' },
+        obs_type: { type: 'string', description: 'Filter by observation type (comma-separated)' },
+        dateStart: { type: 'string', description: 'Start date filter (ISO format)' },
+        dateEnd: { type: 'string', description: 'End date filter (ISO format)' },
+        offset: { type: 'number', description: 'Pagination offset' },
+        orderBy: { type: 'string', description: 'Sort order' },
+      },
     },
     handler: async (args: any) => {
       const endpoint = TOOL_ENDPOINT_MAP['search'];
@@ -198,11 +173,16 @@ NEVER fetch full details without filtering first. 10x token savings.`,
   },
   {
     name: 'timeline',
-    description: 'Step 2: Get context around results. Params: anchor (observation ID) OR query (finds anchor automatically), depth_before, depth_after, project',
+    description: 'Get context around results. Params: anchor (observation ID) OR query (finds anchor automatically), depth_before, depth_after, project',
     inputSchema: {
       type: 'object',
-      properties: {},
-      additionalProperties: true
+      properties: {
+        anchor: { type: 'number', description: 'Observation ID to anchor timeline around' },
+        query: { type: 'string', description: 'Search query (finds anchor automatically)' },
+        depth_before: { type: 'number', description: 'Number of observations before anchor (default: 10)' },
+        depth_after: { type: 'number', description: 'Number of observations after anchor (default: 10)' },
+        project: { type: 'string', description: 'Filter by project name' },
+      },
     },
     handler: async (args: any) => {
       const endpoint = TOOL_ENDPOINT_MAP['timeline'];
@@ -230,7 +210,7 @@ NEVER fetch full details without filtering first. 10x token savings.`,
   },
   {
     name: 'smart_search',
-    description: 'Search codebase for symbols, functions, classes using tree-sitter AST parsing. Returns folded structural views with token counts. Use path parameter to scope the search.',
+    description: 'Structural grep alternative using tree-sitter AST parsing. Use as a fallback when LSP is unavailable. Returns folded structural views with token counts. Use path parameter to scope the search.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -267,7 +247,7 @@ NEVER fetch full details without filtering first. 10x token savings.`,
   },
   {
     name: 'smart_unfold',
-    description: 'Expand a specific symbol (function, class, method) from a file. Returns the full source code of just that symbol. Use after smart_search or smart_outline to read specific code.',
+    description: 'Expand a specific symbol from a file. Use after smart_search to read specific code without loading the full file.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -312,7 +292,7 @@ NEVER fetch full details without filtering first. 10x token savings.`,
   },
   {
     name: 'smart_outline',
-    description: 'Get structural outline of a file — shows all symbols (functions, classes, methods, types) with signatures but bodies folded. Much cheaper than reading the full file.',
+    description: 'Lightweight structural outline of a file — cheaper than reading the full file. Shows symbols with signatures, bodies folded.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -447,9 +427,11 @@ async function main() {
   }, 0);
 }
 
-main().catch((error) => {
-  logger.error('SYSTEM', 'Fatal error', undefined, error);
-  // Exit gracefully: Windows Terminal won't keep tab open on exit 0
-  // The wrapper/plugin will handle restart logic if needed
-  process.exit(0);
-});
+if (import.meta.main) {
+  main().catch((error) => {
+    logger.error('SYSTEM', 'Fatal error', undefined, error);
+    // Exit gracefully: Windows Terminal won't keep tab open on exit 0
+    // The wrapper/plugin will handle restart logic if needed
+    process.exit(0);
+  });
+}

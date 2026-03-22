@@ -61,3 +61,11 @@
 {"timestamp":"2026-03-22T04:36:26.133524+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-vpg","details":{"message":"Acceptance complete. Fixed 3 stale paths in CLAUDE.md (hooks: src/hooks/*.ts → plugin/hooks/hooks.json, docs.json → docs/public/docs.json) and worker README (hook flow diagram). Fixed 27 stale markdown-formatter tests (compact format rewrite from 7e072106 not reflected in tests). All 4 walkthrough items verified: tsc --noEmit clean, build-and-sync succeeds, worker starts (health OK), search returns HTTP 200. 7 process-registry test failures are test isolation (running worker inflates getActiveCount), not Phase 1."}}
 {"timestamp":"2026-03-22T04:36:29.658637+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-vpg","details":{"notes":null}}
 {"timestamp":"2026-03-22T04:36:32.953565+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-l6j","details":{"notes":null}}
+{"timestamp":"2026-03-22T04:42:14.993823+00:00","actor":"Seth","event_type":"created","task_id":"clmem-5qq","details":{}}
+{"timestamp":"2026-03-22T04:42:19.045739+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-jmj","details":{"kind":"parent-child","to":"clmem-5qq"}}
+{"timestamp":"2026-03-22T04:42:19.046162+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-jmj","details":{"kind":"blocks","to":"clmem-5qq"}}
+{"timestamp":"2026-03-22T05:29:14.139472+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-5qq","details":{"status":"active"}}
+{"timestamp":"2026-03-22T07:12:10.495518+00:00","actor":"Seth","event_type":"created","task_id":"clmem-g64","details":{}}
+{"timestamp":"2026-03-22T07:12:11.448325+00:00","actor":"Seth","event_type":"created","task_id":"clmem-kqm","details":{}}
+{"timestamp":"2026-03-22T07:12:34.263461+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-g64","details":{"message":"Discovered during clmem-5qq full suite verification. Pre-existing on main and dev. ProcessRegistry singleton count drifts from map — clearRegistry helper doesn't fully reset."}}
+{"timestamp":"2026-03-22T07:12:34.313297+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-kqm","details":{"message":"Discovered during clmem-5qq full suite verification. Pre-existing on main and dev. Worker start subprocess produces empty stdout."}}

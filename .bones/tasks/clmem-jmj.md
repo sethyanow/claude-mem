@@ -4,9 +4,11 @@ title: 'Phase 2: MCP Tool Cleanup'
 status: open
 type: epic
 priority: 2
-depends_on: [clmem-l6j]
+depends_on: [clmem-l6j, clmem-5qq]
 parent: clmem-cj3
 ---
+
+
 
 ## Context
 Parent epic clmem-cj3, Phase 2. Depends on Phase 1 (clmem-l6j) — needs clean type system before editing MCP schemas.
