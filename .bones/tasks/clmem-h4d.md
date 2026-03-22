@@ -1,10 +1,11 @@
 ---
 id: clmem-h4d
 title: 'Decompose SessionStore: delegate import methods to import/bulk.ts'
-status: active
+status: closed
 type: task
 parent: clmem-l6j
 ---
+
 
 
 ## Context

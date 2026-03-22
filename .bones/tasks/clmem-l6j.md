@@ -4,9 +4,11 @@ title: 'Phase 1: Refactor God Classes & Type System'
 status: open
 type: epic
 priority: 1
-depends_on: [clmem-x2a, clmem-a4z, clmem-v9b, clmem-luq, clmem-h4d]
+depends_on: [clmem-x2a, clmem-a4z, clmem-v9b, clmem-luq, clmem-h4d, clmem-n08]
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -34,7 +36,7 @@ R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass (same count as before refactor)
-- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
+- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [x] WorkerService decomposed: lifecycle separated from session orchestration
 - [x] BaseAgent exists with shared session lifecycle; concrete agents contain only provider-specific logic

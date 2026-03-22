@@ -29,7 +29,7 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass
-- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
+- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
 - [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
