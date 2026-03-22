@@ -104,3 +104,5 @@
 {"timestamp":"2026-03-22T18:01:34.576010+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-xgk","details":{"notes":null}}
 {"timestamp":"2026-03-22T18:24:04.800344+00:00","actor":"Seth","event_type":"claimed","task_id":"clmem-kq9","details":{"actor":"Seth"}}
 {"timestamp":"2026-03-22T18:28:17.891574+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-kq9","details":{"status":"active"}}
+{"timestamp":"2026-03-22T18:42:51.139981+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-kq9","details":{"notes":null}}
+{"timestamp":"2026-03-22T18:42:58.476838+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-kq9","details":{"message":"Extracted 5 methods (search, findByFile, timeline, getContextTimeline, getTimelineByQuery) into dedicated modules under search/. SearchManager 1550→490 lines. 13 delegation tests pass. tsc clean (fixed pre-existing TS errors at lines 1177/1411 via as-any cast on session data). build-and-sync succeeds. No behavior changes."}}

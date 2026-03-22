@@ -35,11 +35,11 @@ R7. Rewrite smart_* tool descriptions to position as structural grep alternative
 R8. Replace `additionalProperties: true` on memory tool schemas with explicit parameter definitions.
 
 ## Success Criteria
-- [ ] `tsc --noEmit` exits 0 — REGRESSED: revert of SearchManager extraction re-introduced 2 TS errors (lines 1177, 1411)
+- [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass — 7 worker-json-status failures are pre-existing (clmem-kqm). Process-registry tests (clmem-g64) now pass (verified 2026-03-22).
 - [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — all 35 CRUD/query methods delegate to sub-modules. SessionStore is 570 lines (down from 1605). Sub-modules have callers.
-- [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern — 8/13 methods use shared pattern. 5 complex methods (search, timeline, getContextTimeline, getTimelineByQuery, findByFile, ~1080 lines) still inline. Prior extraction attempt reverted.
+- [x] SearchManager decomposed: all 13 methods delegate — 8 via shared executeQueryFirstSearch/executeMetadataFirstSearch, 5 via dedicated modules (multi-search, find-by-file, timeline-handler, context-timeline, query-timeline). SearchManager 1550→490 lines.
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
 - [ ] No `additionalProperties: true` on MCP memory tool schemas — get_observations at mcp-server.ts:205 still has it. Test at mcp-server-tools.test.ts:95-98 asserts it should stay.
