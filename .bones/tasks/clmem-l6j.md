@@ -39,8 +39,8 @@ R5. TypeScript/Bun type system — tsc --noEmit clean (R5 from parent)
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass (same count as before refactor)
-- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
-- [x] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
+- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — CRUD + queries still inline, extracted modules orphaned (clmem-xgk)
+- [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern — 5 complex methods still inline, prior extraction reverted (clmem-kq9)
 - [x] WorkerService decomposed: lifecycle separated from session orchestration
 - [x] BaseAgent exists with shared session lifecycle; concrete agents contain only provider-specific logic
 
