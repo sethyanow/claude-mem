@@ -14,6 +14,7 @@ parent: clmem-cj3
 
 
 
+
 ## Context
 Parent epic clmem-cj3 SC5. SearchManager is 1550 lines. 8 simpler methods already delegate to shared `executeQueryFirstSearch`/`executeMetadataFirstSearch` in `search/execute.ts`. 5 complex methods remain inline:
 
@@ -82,3 +83,4 @@ Extraction order: simplest first, building confidence in the pattern before tack
 ## Log
 
 - [2026-03-22T15:43:33Z] [Seth] Extracted 5 methods (search, timeline, getContextTimeline, getTimelineByQuery, findByFile) into dedicated modules under search/. SearchManager 1550→499 lines. 13 delegation tests pass. tsc clean. build-and-sync succeeds.
+- [2026-03-22T15:44:24Z] [Seth] Debrief: Clean mechanical extraction. 5 methods moved to dedicated modules under search/ with deps-injection pattern. Timeline methods moved as-is (duplication with TimelineBuilder preserved intentionally). No workarounds, no surprises, no user corrections. Reflections: Skeleton accuracy good — SRE-added implementation steps directly useful. Epic SC5 now checked. SC4 (SessionStore) and SC8 (get_observations) remain.
