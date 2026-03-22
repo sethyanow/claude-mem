@@ -14,6 +14,8 @@ import {
   createSDKSession,
   getSessionById,
   updateMemorySessionId,
+  ensureMemorySessionIdRegistered,
+  getOrCreateManualSession,
 } from '../../src/services/sqlite/Sessions.js';
 import type { Database } from 'bun:sqlite';
 
@@ -127,6 +129,66 @@ describe('Sessions Module', () => {
 
       // Empty string becomes null via the || null conversion
       expect(session?.custom_title).toBeNull();
+    });
+  });
+
+  describe('ensureMemorySessionIdRegistered', () => {
+    it('should register memory_session_id when it differs from current', () => {
+      const sessionId = createSDKSession(db, 'content-ensure-1', 'project', 'prompt');
+      const memoryId = 'memory-ensure-abc';
+
+      // Initially null
+      let session = getSessionById(db, sessionId);
+      expect(session?.memory_session_id).toBeNull();
+
+      // Ensure registers it
+      ensureMemorySessionIdRegistered(db, sessionId, memoryId);
+
+      session = getSessionById(db, sessionId);
+      expect(session?.memory_session_id).toBe(memoryId);
+    });
+
+    it('should be a no-op when memory_session_id already matches', () => {
+      const sessionId = createSDKSession(db, 'content-ensure-2', 'project', 'prompt');
+      const memoryId = 'memory-ensure-match';
+
+      updateMemorySessionId(db, sessionId, memoryId);
+
+      // Should not throw or change anything
+      ensureMemorySessionIdRegistered(db, sessionId, memoryId);
+
+      const session = getSessionById(db, sessionId);
+      expect(session?.memory_session_id).toBe(memoryId);
+    });
+
+    it('should throw for non-existent session', () => {
+      expect(() => {
+        ensureMemorySessionIdRegistered(db, 99999, 'memory-nonexistent');
+      }).toThrow('Session 99999 not found');
+    });
+  });
+
+  describe('getOrCreateManualSession', () => {
+    it('should create a manual session and return its memory_session_id', () => {
+      const memoryId = getOrCreateManualSession(db, 'test-project');
+
+      expect(memoryId).toBe('manual-test-project');
+    });
+
+    it('should be idempotent - return same ID for same project', () => {
+      const id1 = getOrCreateManualSession(db, 'test-project');
+      const id2 = getOrCreateManualSession(db, 'test-project');
+
+      expect(id1).toBe(id2);
+    });
+
+    it('should create different sessions for different projects', () => {
+      const id1 = getOrCreateManualSession(db, 'project-a');
+      const id2 = getOrCreateManualSession(db, 'project-b');
+
+      expect(id1).not.toBe(id2);
+      expect(id1).toBe('manual-project-a');
+      expect(id2).toBe('manual-project-b');
     });
   });
 

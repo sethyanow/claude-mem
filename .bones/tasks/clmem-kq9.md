@@ -1,7 +1,7 @@
 ---
 id: clmem-kq9
 title: 'Decompose remaining SearchManager methods: search, timeline, getContextTimeline, getTimelineByQuery, findByFile'
-status: open
+status: closed
 type: task
 priority: 1
 parent: clmem-cj3
