@@ -1,11 +1,13 @@
 ---
 id: clmem-cj3
 title: Claude-Mem Refactor & MCP Cleanup
-status: open
+status: closed
 type: epic
 priority: 1
 depends_on: [clmem-l6j, clmem-jmj, clmem-pct, clmem-xgk, clmem-kq9]
 ---
+
+
 
 
 
@@ -221,3 +223,4 @@ CLASSIFIED:
 - New task recommendation: remaining SearchManager methods not using shared pattern
 - Observation: orphaned extracted modules (zero callers), TS6133 unused imports/vars, unreachable code in main()
 - [2026-03-22T14:28:24Z] [Seth] Review-implementation completed. Unchecked SC4 (SessionStore CRUD/queries still inline, 1605 lines), SC5 (5 SearchManager methods ~1080 lines still inline), SC8 (get_observations additionalProperties:true). Cut 3 tasks: clmem-pct (SC8 schema fix), clmem-xgk (SC4 SessionStore delegation), clmem-kq9 (SC5 SearchManager decomposition). SC3 noted as pre-existing (clmem-g64). SC6, SC7, SC10 verified PASS.
+- [2026-03-22T19:41:46Z] [Seth] Adversarial reflection (final review): Dead code from refactoring — unused imports (logger in SessionStore.ts:3, BaseAgent.ts:5), unused properties (orchestrator/timelineBuilder in SearchManager.ts:39-40, sseBroadcaster in SessionOrchestrator.ts:31, _originalLog in mcp-server.ts:19). Recommend cleanup task. as-any casts in context-timeline.ts:90 and query-timeline.ts:111 are pre-existing type mismatches moved during extraction, not introduced — observation only.
