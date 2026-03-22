@@ -1,11 +1,14 @@
 ---
 id: clmem-kq9
 title: 'Decompose remaining SearchManager methods: search, timeline, getContextTimeline, getTimelineByQuery, findByFile'
-status: open
+status: active
 type: task
 priority: 1
+owner: Seth
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -32,12 +35,44 @@ These methods don't fit the existing `QueryFirstConfig`/`MetadataFirstConfig` pa
 - [ ] `tsc --noEmit` exits 0
 - [ ] `npm run build-and-sync` succeeds
 
+## Implementation
+
+Extraction order: simplest first, building confidence in the pattern before tackling complex methods.
+
+1. **Extract `findByFile()`** → `search/find-by-file.ts` (~120 lines). Simplest method, no shared rendering patterns. Export a function that takes `SearchDeps`-style deps object (sessionSearch, sessionStore, chromaSync, formatter, normalizeParams, queryChroma). SearchManager.findByFile becomes a one-liner calling the extracted function.
+
+2. **Extract `search()`** → `search/multi-search.ts` (~270 lines). Has a local `CombinedResult` interface (line 308) — move it with the function. Uses normalizeParams, queryChroma, sessionSearch, sessionStore, formatter. Has 3 distinct paths (filter-only, chroma, fallback) plus result formatting with date/file grouping.
+
+3. **Extract `timeline()`** → `search/timeline-handler.ts` (~270 lines). First of the 3 timeline methods. This method has TWO modes (query-based and anchor-based) plus inline rendering (day grouping, icon selection, table formatting). The inline rendering logic duplicates what `TimelineBuilder` already provides. **Decision: move the method as-is first. DO NOT refactor to use TimelineBuilder in this task** — that's a behavior-change risk and a separate concern. The goal is decomposition, not deduplication.
+
+4. **Extract `getContextTimeline()`** → `search/context-timeline.ts` (~210 lines). Similar inline rendering to timeline(). Move as-is.
+
+5. **Extract `getTimelineByQuery()`** → `search/query-timeline.ts` (~230 lines). Similar inline rendering to timeline(). Move as-is.
+
+6. **Verify SearchManager < 500 lines.** After all 5 extractions, remaining code should be ~460 lines (constructor, helpers, 8 delegated methods, `getRecentContext`). If over 500, `getRecentContext` (lines 985-1110, ~125 lines inline) can also be extracted but is NOT in scope unless needed.
+
+7. **Add delegation tests** extending `search-manager-search-delegation.test.ts`. The existing test uses `Function.prototype.toString()` to verify method bodies don't contain inline markers. Add equivalent tests for the 5 newly-extracted methods.
+
+**Dependency injection pattern:** Follow the established pattern from `execute.ts` — each extracted function takes a deps object with the services it needs (sessionSearch, sessionStore, chromaSync, normalizeParams, queryChroma). Do NOT make the extracted functions methods of a class unless the method has significant internal state.
+
 ## Anti-Patterns
 - NO forcing complex methods into `executeQueryFirstSearch`/`executeMetadataFirstSearch` — extract along natural seams
 - NO behavior changes — tests prove identical runtime behavior
 - NO new abstract classes or interfaces — plain functions or small focused classes
+- NO refactoring timeline methods to use TimelineBuilder during this task — deduplication is a future concern, this task is structural decomposition only
+- NO whole-method copy-paste without converting `this.*` references to deps — every `this.sessionStore`, `this.sessionSearch`, `this.chromaSync`, `this.formatter`, `this.queryChroma`, `this.normalizeParams` must become a dep parameter
 
 ## Key Considerations
-- `timeline()`, `getContextTimeline()`, and `getTimelineByQuery()` share significant timeline rendering logic (day grouping, icon selection, table formatting) — this could become a shared `TimelineRenderer` or similar
-- `search()` has its own chroma ranking + multi-type hydration flow that's distinct from the query-first/metadata-first patterns
-- `findByFile()` is the smallest and simplest — good candidate for first extraction
+- **TimelineBuilder exists but is unused by inline methods.** `TimelineBuilder` (303 lines) at `search/TimelineBuilder.ts` implements the same day-grouping, icon-selection, table-formatting logic that's duplicated inline in `timeline()`, `getContextTimeline()`, and `getTimelineByQuery()`. Refactoring to use it would eliminate ~500 lines of duplication but risks behavior changes. Leave for a follow-up task.
+- **`search()` has a local `CombinedResult` interface** at line 308 — must move to the extracted module or to `search/types.ts`.
+- **`getRecentContext()` is also inline** (~125 lines, 985-1110) but is NOT in scope. Only extract if needed to hit the < 500 line target.
+- **`this` references.** Each method uses: `this.normalizeParams()`, `this.queryChroma()`, `this.sessionSearch`, `this.sessionStore`, `this.chromaSync`, `this.formatter`, `this.timelineService`. The extracted function must receive these as parameters.
+- **`findByFile()` is the smallest and simplest** — good candidate for first extraction to validate the pattern.
+- **SEARCH_CONSTANTS import.** `timeline()` and `getTimelineByQuery()` reference `SEARCH_CONSTANTS.RECENCY_WINDOW_MS`. Ensure the import moves with the extracted code.
+- **ModeManager.getInstance()** is called in timeline rendering for icon selection. This is a singleton — the extracted functions can call it directly.
+
+## Edge Cases
+- **Empty chroma results.** `search()` and `timeline()` have fallback paths when chroma returns empty — verify these paths survive extraction.
+- **Null chromaSync.** Several methods check `this.chromaSync` for null before calling. The deps object must pass `chromaSync: ChromaSync | null`.
+- **Process.cwd() calls.** `search()`, `timeline()`, `getContextTimeline()`, `getTimelineByQuery()` call `process.cwd()`. These should remain as-is in extracted functions (NOT passed as a dep — they need the runtime cwd).
+- **Error return format.** `timeline()` returns `{ content: [{ type: 'text', text: '...' }], isError: true }` for validation failures. Ensure the extracted function preserves this exact format.

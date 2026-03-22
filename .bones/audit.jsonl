@@ -90,3 +90,5 @@
 {"timestamp":"2026-03-22T14:27:21.393144+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"parent-child","to":"clmem-kq9"}}
 {"timestamp":"2026-03-22T14:27:21.393560+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-cj3","details":{"kind":"blocks","to":"clmem-kq9"}}
 {"timestamp":"2026-03-22T14:28:24.895355+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-cj3","details":{"message":"Review-implementation completed. Unchecked SC4 (SessionStore CRUD/queries still inline, 1605 lines), SC5 (5 SearchManager methods ~1080 lines still inline), SC8 (get_observations additionalProperties:true). Cut 3 tasks: clmem-pct (SC8 schema fix), clmem-xgk (SC4 SessionStore delegation), clmem-kq9 (SC5 SearchManager decomposition). SC3 noted as pre-existing (clmem-g64). SC6, SC7, SC10 verified PASS."}}
+{"timestamp":"2026-03-22T15:29:39.535544+00:00","actor":"Seth","event_type":"claimed","task_id":"clmem-kq9","details":{"actor":"Seth"}}
+{"timestamp":"2026-03-22T15:29:39.605661+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-kq9","details":{"status":"active"}}
