@@ -9,27 +9,46 @@
  *
  * No mocks needed - tests a pure function directly and captures real CLI output.
  */
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import { spawnSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
 import path from 'path';
 import { buildStatusOutput, StatusOutput } from '../../src/services/worker-service.js';
 
 const WORKER_SCRIPT = path.join(__dirname, '../../plugin/scripts/worker-service.cjs');
 
+// Shared temp dir for CLAUDE_CONFIG_DIR isolation — prevents tests from reading host settings
+const ISOLATED_CONFIG_DIR = path.join(tmpdir(), `claude-mem-test-${process.pid}`);
+
 /**
  * Run worker CLI command and return stdout + exit code
  * Uses spawnSync for synchronous output capture
+ * Isolates from host ~/.claude/settings.json via CLAUDE_CONFIG_DIR
  */
 function runWorkerStart(): { stdout: string; exitCode: number } {
   const result = spawnSync('bun', [WORKER_SCRIPT, 'start'], {
     encoding: 'utf-8',
-    timeout: 60000
+    timeout: 60000,
+    env: { ...process.env, CLAUDE_CONFIG_DIR: ISOLATED_CONFIG_DIR }
   });
   return { stdout: result.stdout?.trim() || '', exitCode: result.status || 0 };
 }
 
 describe('worker-json-status', () => {
+  // Create isolated config dir with plugin enabled — prevents host settings leakage
+  beforeAll(() => {
+    mkdirSync(ISOLATED_CONFIG_DIR, { recursive: true });
+    writeFileSync(
+      path.join(ISOLATED_CONFIG_DIR, 'settings.json'),
+      JSON.stringify({ enabledPlugins: { 'claude-mem@thedotmack': true } })
+    );
+  });
+
+  afterAll(() => {
+    rmSync(ISOLATED_CONFIG_DIR, { recursive: true, force: true });
+  });
+
   describe('buildStatusOutput', () => {
     describe('ready status', () => {
       it('should return valid JSON with required fields for ready status', () => {
@@ -228,6 +247,47 @@ describe('worker-json-status', () => {
         } else if (parsed.status === 'error') {
           // Error status may include a message explaining the failure
           expect(typeof parsed.message).toBe('string');
+        }
+      });
+    });
+
+    describe('when plugin disabled in Claude settings', () => {
+      it('should output valid JSON with status: ready even when plugin is disabled', () => {
+        if (!existsSync(WORKER_SCRIPT)) {
+          console.log('Skipping CLI test - worker script not built');
+          return;
+        }
+
+        const tmpDir = path.join(tmpdir(), `claude-mem-test-disabled-${Date.now()}`);
+        mkdirSync(tmpDir, { recursive: true });
+        try {
+          writeFileSync(
+            path.join(tmpDir, 'settings.json'),
+            JSON.stringify({ enabledPlugins: { 'claude-mem@thedotmack': false } })
+          );
+
+          const result = spawnSync('bun', [WORKER_SCRIPT, 'start'], {
+            encoding: 'utf-8',
+            timeout: 60000,
+            env: { ...process.env, CLAUDE_CONFIG_DIR: tmpDir }
+          });
+
+          const stdout = result.stdout?.trim() || '';
+          const exitCode = result.status || 0;
+
+          // Must exit 0 (Windows Terminal compatibility)
+          expect(exitCode).toBe(0);
+
+          // Must output valid JSON — not empty stdout
+          expect(stdout.length).toBeGreaterThan(0);
+          expect(() => JSON.parse(stdout)).not.toThrow();
+
+          const parsed = JSON.parse(stdout);
+          expect(parsed.status).toBe('ready');
+          expect(parsed.continue).toBe(true);
+          expect(parsed.suppressOutput).toBe(true);
+        } finally {
+          rmSync(tmpDir, { recursive: true, force: true });
         }
       });
     });

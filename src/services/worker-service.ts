@@ -710,6 +710,9 @@ async function main() {
   // Only gate hook-initiated commands; CLI management (stop/status) still works.
   const hookInitiatedCommands = ['start', 'hook', 'restart', '--daemon'];
   if ((hookInitiatedCommands.includes(command) || command === undefined) && isPluginDisabledInClaudeSettings()) {
+    if (command === 'start') {
+      exitWithStatus('ready');
+    }
     process.exit(0);
   }
 
