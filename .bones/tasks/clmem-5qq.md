@@ -1,11 +1,13 @@
 ---
 id: clmem-5qq
 title: 'Clean up MCP tool definitions: remove __IMPORTANT, fix schemas, rewrite descriptions'
-status: active
+status: closed
 type: task
 priority: 2
 parent: clmem-jmj
 ---
+
+
 
 
 
@@ -134,18 +136,18 @@ Review any failures
 Commit message: "fix: clean up MCP tool definitions — remove __IMPORTANT, add explicit schemas, rewrite descriptions"
 
 ## Success Criteria
-- [ ] `__IMPORTANT` tool removed from tools array
-- [ ] Exactly 6 tools remain: search, timeline, get_observations, smart_search, smart_unfold, smart_outline
-- [ ] `search` tool has explicit typed properties for all 9 params, no `additionalProperties: true`
-- [ ] `timeline` tool has explicit typed properties for all 5 params, no `additionalProperties: true`
-- [ ] `get_observations` schema unchanged
-- [ ] `smart_search` description positions as structural grep alternative / fallback
-- [ ] `smart_unfold` description does not position as primary code navigation tool
-- [ ] `smart_outline` description frames as lightweight / cheaper alternative
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass
-- [ ] New tests cover tool listing, schema shapes, and description positioning
-- [ ] Built output (`plugin/scripts/mcp-server.cjs`) still invokes `main()` when run as entry point (verify after `npm run build-and-sync`)
+- [x] `__IMPORTANT` tool removed from tools array
+- [x] Exactly 6 tools remain: search, timeline, get_observations, smart_search, smart_unfold, smart_outline
+- [x] `search` tool has explicit typed properties for all 9 params, no `additionalProperties: true`
+- [x] `timeline` tool has explicit typed properties for all 5 params, no `additionalProperties: true`
+- [x] `get_observations` schema unchanged
+- [x] `smart_search` description positions as structural grep alternative / fallback
+- [x] `smart_unfold` description does not position as primary code navigation tool
+- [x] `smart_outline` description frames as lightweight / cheaper alternative
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (8 pre-existing upstream failures tracked as clmem-g64 and clmem-kqm)
+- [x] New tests cover tool listing, schema shapes, and description positioning
+- [x] Built output (`plugin/scripts/mcp-server.cjs`) still invokes `main()` when run as entry point (verify after `npm run build-and-sync`)
 
 ## Key Considerations
 
@@ -162,3 +164,7 @@ Commit message: "fix: clean up MCP tool definitions — remove __IMPORTANT, add 
 - NO putting workflow instructions in tool descriptions
 - NO changing handler logic — this task is schema/description only
 - NO skipping the `import.meta.main` guard — tests WILL fail if `main()` runs on import (predicted shortcut: agent exports `tools` but forgets the guard, then wastes time debugging `StdioServerTransport` errors in test output)
+
+## Log
+
+- [2026-03-22T07:14:57Z] [Seth] Debrief: esbuild import.meta.main→{}.main issue caught by adversarial planning, fixed with define in build config. Step 5 in skeleton was insufficient (only export, not main() guard) — SRE caught it. 8 pre-existing upstream test failures tracked as clmem-g64 and clmem-kqm. Reflections: SRE+adversarial process caught a real production bug. User correction: fix upstream failures in-place, don't defer (saved as feedback memory).

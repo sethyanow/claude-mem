@@ -33,9 +33,9 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [x] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
-- [ ] No `additionalProperties: true` on MCP memory tool schemas
-- [ ] `__IMPORTANT` tool removed from MCP server
-- [ ] smart_* tool descriptions reference LSP as primary, position self as fallback
+- [x] No `additionalProperties: true` on MCP memory tool schemas
+- [x] `__IMPORTANT` tool removed from MCP server
+- [x] smart_* tool descriptions reference LSP as primary, position self as fallback
 
 ## Anti-Patterns (FORBIDDEN)
 - NO behavior changes during refactor — all decomposition is structural, preserving identical runtime behavior. Tests are the proof. (Reason: refactors that change behavior silently introduce bugs that surface much later.)

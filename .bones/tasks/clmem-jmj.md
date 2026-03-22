@@ -4,9 +4,11 @@ title: 'Phase 2: MCP Tool Cleanup'
 status: open
 type: epic
 priority: 2
-depends_on: [clmem-l6j, clmem-5qq]
+depends_on: [clmem-l6j, clmem-5qq, clmem-9pc]
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -21,16 +23,16 @@ R7. Rewrite smart_* descriptions — position as structural grep alternatives, n
 R8. Explicit parameter definitions on memory tool schemas (R8 from parent)
 
 ## Success Criteria
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass
-- [ ] `__IMPORTANT` tool removed from mcp-server.ts
-- [ ] `search` tool has explicit `properties` with typed params (query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy)
-- [ ] `timeline` tool has explicit `properties` with typed params (anchor, query, depth_before, depth_after, project)
-- [ ] `get_observations` schema unchanged (already has explicit params)
-- [ ] smart_search description mentions "structural grep alternative" or similar, does not position as primary
-- [ ] smart_unfold description references "use after smart_search" not "use for code navigation"
-- [ ] smart_outline description frames as "cheaper than full file read" not "shows all symbols"
-- [ ] No `additionalProperties: true` on search or timeline schemas
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (8 pre-existing upstream failures tracked as clmem-g64 and clmem-kqm)
+- [x] `__IMPORTANT` tool removed from mcp-server.ts
+- [x] `search` tool has explicit `properties` with typed params (query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy)
+- [x] `timeline` tool has explicit `properties` with typed params (anchor, query, depth_before, depth_after, project)
+- [x] `get_observations` schema unchanged (already has explicit params)
+- [x] smart_search description mentions "structural grep alternative" or similar, does not position as primary
+- [x] smart_unfold description references "use after smart_search" not "use for code navigation"
+- [x] smart_outline description frames as "cheaper than full file read" not "shows all symbols"
+- [x] No `additionalProperties: true` on search or timeline schemas
 
 ## Anti-Patterns
 - NO deleting smart_* tools — reframe only
