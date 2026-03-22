@@ -12,6 +12,7 @@ parent: clmem-cj3
 
 
 
+
 ## Context
 Parent epic clmem-cj3 SC4. SessionStore is 1605 lines (verified). Phase 1 extracted sub-modules to `observations/`, `summaries/`, `sessions/`, `timeline/`, `prompts/`, `migrations/` — but SessionStore wasn't refactored to delegate to them. Migrations delegate to `MigrationRunner` (line 38). Imports delegate to `./import/bulk.js` (lines 1529-1604, already delegating). All observation CRUD, summary CRUD, session queries, prompt queries, and timeline queries remain inline. Extracted modules have zero callers outside re-export facades (verified via LSP findReferences).
 
@@ -87,3 +88,7 @@ Parent epic clmem-cj3 SC4. SessionStore is 1605 lines (verified). Phase 1 extrac
 - **PendingMessageStore parameter**: `storeObservationsAndMarkComplete` on SessionStore takes `_pendingStore: PendingMessageStore` parameter but the extracted version doesn't. The SessionStore method ignores it (underscore prefix). Delegation must preserve the SessionStore signature (callers pass it) while not passing it to the extracted function.
 - **Name mapping**: `getSessionSummariesByIds` → `getSummariesByIds`, `getSessionSummaryById` → `getSummaryById`. Aliases, not renames — SessionStore method names stay the same.
 - **Import aliasing**: Some import names may collide (e.g., `storeObservation` the extracted function vs `storeObservation` the method). Use named imports with different aliases if needed.
+
+## Log
+
+- [2026-03-22T16:58:25Z] [Seth] Debrief: Clean mechanical delegation — 1605→600 lines, zero inline SQL, 81 tests pass. 2 functions extracted (ensureMemorySessionIdRegistered, getOrCreateManualSession), 1 orphan removed (getSummaryById). ~12 'as any' casts for inline-vs-named type bridging — cosmetic debt, not behavioral. Reflections: Skeleton accurate after SRE update. No surprises, no corrections, no workarounds.
