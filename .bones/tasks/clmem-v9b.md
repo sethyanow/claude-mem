@@ -125,7 +125,7 @@ Remove extracted methods from WorkerService (they now live in SessionOrchestrato
 Run tsc --noEmit.
 
 ### Step 10: Verify
-Run full test suite. Run `npm run build-and-sync`. Verify `wc -l` on both files.
+Run full test suite. Run `npm run build-and-sync`.
 
 ### Design decision: Property scope
 `lastAiInteraction` is written by `startSessionProcessor` and read by the health endpoint (registered in `registerRoutes`). After extraction, SessionOrchestrator owns this state and exposes a getter. WorkerService reads it in the health endpoint.

@@ -57,7 +57,7 @@ Test that SessionStore's import methods delegate to the modular functions from i
 Run tests that exercise the import path. Check `DataRoutes.ts` callers still compile via `tsc --noEmit`.
 
 ### Step 5: Verify full suite + build
-Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SessionStore shows ~150-180 line reduction (method bodies removed, signatures retained as wrappers).
+Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`.
 
 ## Success Criteria
 - [x] SessionStore import methods delegate to import/bulk.ts functions (no direct SQL in SessionStore)

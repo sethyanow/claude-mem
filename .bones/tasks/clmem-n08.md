@@ -71,7 +71,7 @@ Replace each method body with a call to the shared function, passing the method-
 Run test from Step 2. Verify all 8 methods no longer contain inline search logic.
 
 ### Step 6: Verify full suite + build
-Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SearchManager shows significant line reduction.
+Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`.
 
 ## Success Criteria
 - [x] Shared search execution function(s) exist in `src/services/worker/search/execute.ts`

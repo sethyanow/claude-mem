@@ -75,7 +75,7 @@ Test that after constructing SessionStore, schema state is correct (all expected
 Use LSP findReferences on 2-3 representative migration methods before deletion to confirm they're only called from SessionStore's constructor. All 15 are private methods, so external callers are unlikely but verify.
 
 ### Step 5: Verify full suite + build
-Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SessionStore shows ~800 line reduction.
+Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`.
 
 ## Success Criteria
 - [x] SessionStore constructor delegates migration work to MigrationRunner (no direct migration SQL)
