@@ -84,12 +84,19 @@ Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on Sear
 - NO changing the public interface of SearchManager — callers (route handlers) unchanged
 - NO touching the `search()` method (line 126) — it's the main combined search with different structure, not part of this task
 - NO touching timeline methods (`timeline`, `getRecentContext`, `getContextTimeline`, `getTimelineByQuery`) — different pattern, different task
+- NO touching `findByFile()` (line 1128) — returns dual entity types (observations + sessions) with date grouping; doesn't fit Pattern A or B
 - FORBIDDEN: creating an overly abstract factory/registry/DI system — the shared function is a plain function with a config object, not a framework
 - FORBIDDEN: delegating fewer than all 8 pattern methods — partial delegation is not "done"
+- FORBIDDEN: handling `changes()` multi-source metadata by keeping the 3-source query inline and only delegating the post-query steps — that's partial delegation
 
 ## Key Considerations
-- `changes()` (line 749) is slightly more complex than the others — it searches across multiple concept types (what-changed, bug, change) and merges results. Verify it fits the shared pattern or note it as a deviation.
+- `changes()` (L749) is MORE than "slightly more complex" — it queries 3 metadata sources (`findByType('change')`, `findByConcept('change')`, `findByConcept('what-changed')`), deduplicates via Set, then ranks via Chroma. The config interface must support an array of metadata query functions with deduplication, or `changes()` needs a pre-processing step that produces the unified ID list before handing off to the shared function.
+- `decisions()` (L675) is a Pattern A/B hybrid — when `query` exists, it uses direct Chroma semantic search with a type filter (Pattern A style). When no `query`, it uses metadata-first (Pattern B). The shared function for Pattern B must handle this optional query branch, or decisions() needs to select which shared function to call based on query presence.
+- **Error handling divergence:** `decisions()` and `changes()` wrap Chroma in try/catch with fallback. The other 6 methods don't. The shared function should consistently handle Chroma errors — either always try/catch (safest, preserves decisions/changes behavior) or document why some methods lack it.
+- **`searchUserPrompts` empty message variation:** uses `query ? ... : 'No user prompts found'` — conditional message unlike other Pattern A methods. The empty message config should accept a function or template, not just a static string.
+- `findByFile()` is intentionally OUT OF SCOPE — returns both observations and sessions combined with date-grouped formatting. Different output shape entirely.
 - The `search()` method is intentionally OUT OF SCOPE — it combines observations + sessions + prompts with date grouping and file grouping. Different pattern entirely.
 - Timeline methods are intentionally OUT OF SCOPE — they share their own duplication but it's a different concern.
-- The formatter varies: `formatObservationIndex` for observations, `formatSessionIndex` for sessions, `formatPromptIndex` for prompts. The shared function config must accept a formatter function reference.
+- The formatter varies: `formatObservationIndex` for observations, `formatSessionIndex` for sessions, `formatUserPromptIndex` for prompts. The shared function config must accept a formatter function reference.
 - SearchManager line count should drop substantially (8 methods × ~60 lines each ≈ ~480 lines of duplication).
+- **Verify "baseline 34" test count** at execution time — run `bun test` before starting to confirm current test state.
