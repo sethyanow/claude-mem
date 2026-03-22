@@ -4,8 +4,16 @@ title: Claude-Mem Refactor & MCP Cleanup
 status: open
 type: epic
 priority: 1
-depends_on: [clmem-l6j, clmem-jmj]
+depends_on: [clmem-l6j, clmem-jmj, clmem-pct, clmem-xgk, clmem-kq9]
 ---
+
+
+
+
+
+
+
+
 
 
 
@@ -29,12 +37,12 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 ## Success Criteria
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
-- [x] All existing tests pass
-- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports
-- [x] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern
+- [x] All existing tests pass — 7 process-registry failures are pre-existing (clmem-g64), accepted during both phase-gate acceptances
+- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — migrations and imports delegated, but CRUD + queries (1605 lines) still inline. Extracted sub-modules orphaned with zero callers.
+- [ ] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern — 8/13 methods use shared pattern. 5 complex methods (search, timeline, getContextTimeline, getTimelineByQuery, findByFile, ~1080 lines) still inline.
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
-- [x] No `additionalProperties: true` on MCP memory tool schemas
+- [ ] No `additionalProperties: true` on MCP memory tool schemas — get_observations at mcp-server.ts:205 still has it. Test at mcp-server-tools.test.ts:95-98 asserts it should stay.
 - [x] `__IMPORTANT` tool removed from MCP server
 - [x] smart_* tool descriptions reference LSP as primary, position self as fallback
 
@@ -187,3 +195,33 @@ src/servers/mcp-server.ts  → 4 tools (search, timeline, get_observations, smar
 ## Log
 
 - [2026-03-22T07:32:41Z] [Seth] Phase 2 acceptance (clmem-9pc) closed. Sub-epic clmem-jmj closed. Both sub-epics complete. All 10 parent epic success criteria checked. Next: review-implementation (Step 4) in fresh session.
+- [2026-03-22T07:57:59Z] [Seth] Adversarial reflection (review-implementation Step 2H):
+
+COMPONENTS TRACED:
+1. search/execute.ts — shared execution pattern (executeQueryFirstSearch, executeMetadataFirstSearch)
+2. SessionOrchestrator.ts — session processing extraction
+3. agents/BaseAgent.ts + ResponseProcessor.ts — agent hierarchy
+4. mcp-server.ts — schema changes, tool descriptions
+5. Orphaned modules (observations/store.ts, summaries/store.ts, sessions/create.ts, observations/get.ts)
+
+BOUNDARIES CHECKED: MCP→callWorkerAPI (String serialization), MCP→callWorkerAPIPost (JSON body), execute.ts→Chroma (metadata shape), SessionOrchestrator→agent.startSession
+
+Q1 FINDINGS:
+- execute.ts:81 accesses chromaResults.metadatas[idx].created_at_epoch without validation. If Chroma metadata lacks this field, recency filter silently rejects valid results. Pre-existing pattern (moved from SearchManager inline code, not introduced).
+- All MCP handlers use args:any — no type narrowing at MCP boundary. Pre-existing.
+
+Q2 FINDINGS:
+- SearchManager.search() (138-400, ~270 lines), .timeline() (409-680, ~270 lines), .getContextTimeline() (1111-1320, ~200 lines), .getTimelineByQuery() (1323-1550, ~220 lines), .findByFile() (839-960, ~120 lines) still implement inline normalize→chroma→db→format. Same structural pattern as extracted methods. Whether SC5 covers these is interpretive — they are genuinely more complex than the 8 extracted methods.
+- Recommend future task: extract remaining SearchManager methods to shared patterns or document why they diverge.
+
+Q3 FINDINGS:
+- callWorkerAPI line 59: String(value) converts arrays to comma-separated strings. Works by convention for search/timeline params. get_observations correctly uses callWorkerAPIPost for ids array. No new boundary issues introduced.
+
+LIE DETECTOR: Clean on new code. No swallowed errors, no new as-any casts, no TODOs, no unbounded retries. setTimeout(100ms) in SessionOrchestrator bounded and appropriate. Unrecoverable error patterns (line 115-122) use hardcoded strings — fragile but pre-existing.
+
+CLASSIFIED:
+- Review gap: get_observations additionalProperties:true (SC8)
+- Review gap: mcp-server-tools.test.ts line 95-98 asserts the gap, preventing SC8 fix
+- New task recommendation: remaining SearchManager methods not using shared pattern
+- Observation: orphaned extracted modules (zero callers), TS6133 unused imports/vars, unreachable code in main()
+- [2026-03-22T14:28:24Z] [Seth] Review-implementation completed. Unchecked SC4 (SessionStore CRUD/queries still inline, 1605 lines), SC5 (5 SearchManager methods ~1080 lines still inline), SC8 (get_observations additionalProperties:true). Cut 3 tasks: clmem-pct (SC8 schema fix), clmem-xgk (SC4 SessionStore delegation), clmem-kq9 (SC5 SearchManager decomposition). SC3 noted as pre-existing (clmem-g64). SC6, SC7, SC10 verified PASS.
