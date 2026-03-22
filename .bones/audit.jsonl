@@ -126,3 +126,4 @@
 {"timestamp":"2026-03-22T20:53:22.263130+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-p1x","details":{"status":"active"}}
 {"timestamp":"2026-03-22T21:01:11.727588+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-p1x","details":{"notes":null}}
 {"timestamp":"2026-03-22T21:01:36.688800+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-kqm","details":{"notes":null}}
+{"timestamp":"2026-03-22T21:02:30.413386+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-p1x","details":{"message":"Debrief: Clean fix — 3 lines + test isolation. All 8 pre-existing failures resolved (all CLI tests use start command). Race condition on first runWorkerStart after build-and-sync (worker mid-restart) — pre-existing fragility, not regression. Reflections: skeleton was accurate except intermediate failure count (SRE flagged it). No user corrections. No memories to update."}}

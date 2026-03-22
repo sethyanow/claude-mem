@@ -11,6 +11,7 @@ parent: clmem-kqm
 
 
 
+
 ## Context
 
 Root cause from clmem-kqm diagnosis: `worker-service.ts:713` does bare `process.exit(0)` when `isPluginDisabledInClaudeSettings()` returns true for `start` command, producing no JSON output. `exitWithStatus` is hoisted (function declaration at line 720 inside `main()`) and available but not called. CLI tests read host `~/.claude/settings.json` (which has `claude-mem@thedotmack: false`) without env isolation.
@@ -76,3 +77,7 @@ Commit `.bones/` and source changes.
 - Do NOT move `exitWithStatus` outside `main()` — it uses `process.exit()` as `never`, keep it scoped
 - Do NOT mock `isPluginDisabledInClaudeSettings` in tests — use env isolation via `CLAUDE_CONFIG_DIR`
 - Do NOT change behavior for `hook`, `restart`, or `--daemon` commands — only `start` needs JSON output
+
+## Log
+
+- [2026-03-22T21:02:30Z] [Seth] Debrief: Clean fix — 3 lines + test isolation. All 8 pre-existing failures resolved (all CLI tests use start command). Race condition on first runWorkerStart after build-and-sync (worker mid-restart) — pre-existing fragility, not regression. Reflections: skeleton was accurate except intermediate failure count (SRE flagged it). No user corrections. No memories to update.
