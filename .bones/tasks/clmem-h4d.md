@@ -8,6 +8,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Fifth task in Phase 1 (clmem-l6j). Follows the same delegation pattern as clmem-luq (migrations → MigrationRunner). SessionStore has 4 import methods (~200 lines, lines 1523-1722) that are duplicates of the modular functions already extracted to `src/services/sqlite/import/bulk.ts` (237 lines).
 
@@ -86,3 +87,7 @@ Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on Sess
 - **SRE-verified:** Baseline test count: 1178 pass, 34 fail, 3 skip across 74 files.
 - **First-time activation:** The modular functions in import/bulk.ts have zero external references — they are currently unused duplicates. Delegation will be their first actual invocation. No existing tests exercise them.
 - **Bun module mocking:** Step 2's spy-based test requires `mock.module()` or equivalent in Bun's test runner. Verify Bun supports intercepting module-level imports before writing the test. If not available, an alternative RED test: verify SessionStore has a module-level import from `./import/bulk.js` (absent before delegation, present after).
+
+## Log
+
+- [2026-03-22T02:31:17Z] [Seth] Debrief: Pure mechanical delegation, no workarounds. Used Function.prototype.toString() for RED test instead of skeleton's spyOn approach — ESM module-level function spying doesn't intercept aliased imports in Bun. All 4 methods verified content-identical during SRE. 117-line reduction (1722→1605). Reflections: No surprises. Skeleton Step 2 spy approach incorrect (SRE caught this risk). SessionStore criterion now met by literal text (migrations + imports delegated). Next task: SearchManager R3 decomposition (clmem-n08).
