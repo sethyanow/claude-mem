@@ -40,3 +40,7 @@
 {"timestamp":"2026-03-22T01:54:36.774793+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-luq","details":{"status":"active"}}
 {"timestamp":"2026-03-22T01:54:36.811420+00:00","actor":"Seth","event_type":"claimed","task_id":"clmem-luq","details":{"actor":"Seth"}}
 {"timestamp":"2026-03-22T02:01:52.998601+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-luq","details":{"notes":null}}
+{"timestamp":"2026-03-22T02:04:20.357107+00:00","actor":"Seth","event_type":"created","task_id":"clmem-h4d","details":{}}
+{"timestamp":"2026-03-22T02:04:25.040605+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"parent-child","to":"clmem-h4d"}}
+{"timestamp":"2026-03-22T02:04:25.041050+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"blocks","to":"clmem-h4d"}}
+{"timestamp":"2026-03-22T02:04:25.081041+00:00","actor":"Seth","event_type":"dep_added","task_id":"clmem-l6j","details":{"kind":"blocks","to":"clmem-h4d"}}
