@@ -31,6 +31,8 @@ import {
   SEARCH_CONSTANTS
 } from './search/index.js';
 import type { TimelineData } from './search/index.js';
+import { executeQueryFirstSearch, executeMetadataFirstSearch } from './search/execute.js';
+import type { SearchDeps } from './search/execute.js';
 
 export class SearchManager {
   private orchestrator: SearchOrchestrator;
@@ -50,6 +52,16 @@ export class SearchManager {
       chromaSync
     );
     this.timelineBuilder = new TimelineBuilder();
+  }
+
+  /** Build deps object for shared search execution functions */
+  private searchDeps(): SearchDeps {
+    return {
+      normalizeParams: (a: any) => this.normalizeParams(a),
+      queryChroma: (q: string, l: number, f?: Record<string, any>) => this.queryChroma(q, l, f),
+      chromaAvailable: !!this.chromaSync,
+      formatter: this.formatter,
+    };
   }
 
   /**
@@ -673,156 +685,71 @@ export class SearchManager {
    * Tool handler: decisions
    */
   async decisions(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { query, ...filters } = normalized;
-    let results: ObservationSearchResult[] = [];
-
-    // Search for decision-type observations
-    if (this.chromaSync) {
-      try {
-        if (query) {
-          // Semantic search filtered to decision type
-          logger.debug('SEARCH', 'Using Chroma semantic search with type=decision filter', {});
-          const chromaResults = await this.queryChroma(query, Math.min((filters.limit || 20) * 2, 100), { type: 'decision' });
-          const obsIds = chromaResults.ids;
-
-          if (obsIds.length > 0) {
-            results = this.sessionStore.getObservationsByIds(obsIds, { ...filters, type: 'decision' });
-            // Preserve Chroma ranking order
-            results.sort((a, b) => obsIds.indexOf(a.id) - obsIds.indexOf(b.id));
-          }
-        } else {
-          // No query: get all decisions, rank by "decision" keyword
-          logger.debug('SEARCH', 'Using metadata-first + semantic ranking for decisions', {});
-          const metadataResults = this.sessionSearch.findByType('decision', filters);
-
-          if (metadataResults.length > 0) {
-            const ids = metadataResults.map(obs => obs.id);
-            const chromaResults = await this.queryChroma('decision', Math.min(ids.length, 100));
-
-            const rankedIds: number[] = [];
-            for (const chromaId of chromaResults.ids) {
-              if (ids.includes(chromaId) && !rankedIds.includes(chromaId)) {
-                rankedIds.push(chromaId);
-              }
-            }
-
-            if (rankedIds.length > 0) {
-              results = this.sessionStore.getObservationsByIds(rankedIds, { limit: filters.limit || 20 });
-              results.sort((a, b) => rankedIds.indexOf(a.id) - rankedIds.indexOf(b.id));
-            }
-          }
+    return executeMetadataFirstSearch(args, this.searchDeps(), {
+      getMetadataIds: (n) => this.sessionSearch.findByType('decision', n).map((obs: ObservationSearchResult) => obs.id),
+      chromaQueryString: () => 'decision',
+      hydrateObservations: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      extractQuery: (n) => n.query,
+      directChromaSearch: async (deps, query, n) => {
+        const chromaResults = await deps.queryChroma(query, Math.min((n.limit || 20) * 2, 100), { type: 'decision' });
+        const obsIds = chromaResults.ids;
+        if (obsIds.length > 0) {
+          const results = this.sessionStore.getObservationsByIds(obsIds, { ...n, type: 'decision' });
+          results.sort((a: ObservationSearchResult, b: ObservationSearchResult) => obsIds.indexOf(a.id) - obsIds.indexOf(b.id));
+          return results;
         }
-      } catch (chromaError) {
-        logger.error('SEARCH', 'Chroma search failed for decisions, falling back to metadata search', {}, chromaError as Error);
-      }
-    }
-
-    if (results.length === 0) {
-      results = this.sessionSearch.findByType('decision', filters);
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: 'No decision observations found'
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} decision(s)\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+        return [];
+      },
+      wrapInTryCatch: true,
+      getFallbackResults: (n) => this.sessionSearch.findByType('decision', n),
+      emptyMessage: 'No decision observations found',
+      headerText: (count: number) => `Found ${count} decision(s)`,
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      logLabel: 'decisions',
+    });
   }
 
   /**
    * Tool handler: changes
    */
   async changes(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { ...filters } = normalized;
-    let results: ObservationSearchResult[] = [];
+    // Helper: multi-source metadata query with deduplication
+    const getChangeIds = (n: any): number[] => {
+      const typeResults = this.sessionSearch.findByType('change', n);
+      const conceptChange = this.sessionSearch.findByConcept('change', n);
+      const conceptWhatChanged = this.sessionSearch.findByConcept('what-changed', n);
+      const allIds = new Set<number>();
+      [...typeResults, ...conceptChange, ...conceptWhatChanged].forEach(obs => allIds.add(obs.id));
+      return Array.from(allIds);
+    };
 
-    // Search for change-type observations and change-related concepts
-    if (this.chromaSync) {
-      try {
-        logger.debug('SEARCH', 'Using hybrid search for change-related observations', {});
-
-        // Get all observations with type="change" or concepts containing change
-        const typeResults = this.sessionSearch.findByType('change', filters);
-        const conceptChangeResults = this.sessionSearch.findByConcept('change', filters);
-        const conceptWhatChangedResults = this.sessionSearch.findByConcept('what-changed', filters);
-
-        // Combine and deduplicate
-        const allIds = new Set<number>();
-        [...typeResults, ...conceptChangeResults, ...conceptWhatChangedResults].forEach(obs => allIds.add(obs.id));
-
-        if (allIds.size > 0) {
-          const idsArray = Array.from(allIds);
-          const chromaResults = await this.queryChroma('what changed', Math.min(idsArray.length, 100));
-
-          const rankedIds: number[] = [];
-          for (const chromaId of chromaResults.ids) {
-            if (idsArray.includes(chromaId) && !rankedIds.includes(chromaId)) {
-              rankedIds.push(chromaId);
-            }
-          }
-
-          if (rankedIds.length > 0) {
-            results = this.sessionStore.getObservationsByIds(rankedIds, { limit: filters.limit || 20 });
-            results.sort((a, b) => rankedIds.indexOf(a.id) - rankedIds.indexOf(b.id));
-          }
-        }
-      } catch (chromaError) {
-        logger.error('SEARCH', 'Chroma search failed for changes, falling back to metadata search', {}, chromaError as Error);
-      }
-    }
-
-    if (results.length === 0) {
-      const typeResults = this.sessionSearch.findByType('change', filters);
-      const conceptResults = this.sessionSearch.findByConcept('change', filters);
-      const whatChangedResults = this.sessionSearch.findByConcept('what-changed', filters);
-
+    // Helper: multi-source fallback with dedup and temporal sort
+    const getChangeFallback = (n: any): ObservationSearchResult[] => {
+      const typeResults = this.sessionSearch.findByType('change', n);
+      const conceptResults = this.sessionSearch.findByConcept('change', n);
+      const whatChangedResults = this.sessionSearch.findByConcept('what-changed', n);
       const allIds = new Set<number>();
       [...typeResults, ...conceptResults, ...whatChangedResults].forEach(obs => allIds.add(obs.id));
-
-      results = Array.from(allIds).map(id =>
+      const results = Array.from(allIds).map(id =>
         typeResults.find(obs => obs.id === id) ||
         conceptResults.find(obs => obs.id === id) ||
         whatChangedResults.find(obs => obs.id === id)
       ).filter(Boolean) as ObservationSearchResult[];
-
       results.sort((a, b) => b.created_at_epoch - a.created_at_epoch);
-      results = results.slice(0, filters.limit || 20);
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: 'No change-related observations found'
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} change-related observation(s)\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
+      return results.slice(0, n.limit || 20);
     };
+
+    return executeMetadataFirstSearch(args, this.searchDeps(), {
+      getMetadataIds: getChangeIds,
+      chromaQueryString: () => 'what changed',
+      hydrateObservations: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      wrapInTryCatch: true,
+      getFallbackResults: getChangeFallback,
+      emptyMessage: 'No change-related observations found',
+      headerText: (count: number) => `Found ${count} change-related observation(s)`,
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      logLabel: 'changes',
+    });
   }
 
 
@@ -830,56 +757,17 @@ export class SearchManager {
    * Tool handler: how_it_works
    */
   async howItWorks(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { ...filters } = normalized;
-    let results: ObservationSearchResult[] = [];
-
-    // Search for how-it-works concept observations
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using metadata-first + semantic ranking for how-it-works', {});
-      const metadataResults = this.sessionSearch.findByConcept('how-it-works', filters);
-
-      if (metadataResults.length > 0) {
-        const ids = metadataResults.map(obs => obs.id);
-        const chromaResults = await this.queryChroma('how it works architecture', Math.min(ids.length, 100));
-
-        const rankedIds: number[] = [];
-        for (const chromaId of chromaResults.ids) {
-          if (ids.includes(chromaId) && !rankedIds.includes(chromaId)) {
-            rankedIds.push(chromaId);
-          }
-        }
-
-        if (rankedIds.length > 0) {
-          results = this.sessionStore.getObservationsByIds(rankedIds, { limit: filters.limit || 20 });
-          results.sort((a, b) => rankedIds.indexOf(a.id) - rankedIds.indexOf(b.id));
-        }
-      }
-    }
-
-    if (results.length === 0) {
-      results = this.sessionSearch.findByConcept('how-it-works', filters);
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: 'No "how it works" observations found'
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} "how it works" observation(s)\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeMetadataFirstSearch(args, this.searchDeps(), {
+      getMetadataIds: (normalized) => this.sessionSearch.findByConcept('how-it-works', normalized).map(obs => obs.id),
+      chromaQueryString: () => 'how it works architecture',
+      hydrateObservations: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      wrapInTryCatch: false,
+      getFallbackResults: (normalized) => this.sessionSearch.findByConcept('how-it-works', normalized),
+      emptyMessage: 'No "how it works" observations found',
+      headerText: (count: number) => `Found ${count} "how it works" observation(s)`,
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      logLabel: 'how-it-works',
+    });
   }
 
 
@@ -887,56 +775,13 @@ export class SearchManager {
    * Tool handler: search_observations
    */
   async searchObservations(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { query, ...options } = normalized;
-    let results: ObservationSearchResult[] = [];
-
-    // Vector-first search via ChromaDB
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using hybrid semantic search (Chroma + SQLite)', {});
-
-      // Step 1: Chroma semantic search (top 100)
-      const chromaResults = await this.queryChroma(query, 100);
-      logger.debug('SEARCH', 'Chroma returned semantic matches', { matchCount: chromaResults.ids.length });
-
-      if (chromaResults.ids.length > 0) {
-        // Step 2: Filter by recency (90 days)
-        const ninetyDaysAgo = Date.now() - SEARCH_CONSTANTS.RECENCY_WINDOW_MS;
-        const recentIds = chromaResults.ids.filter((_id, idx) => {
-          const meta = chromaResults.metadatas[idx];
-          return meta && meta.created_at_epoch > ninetyDaysAgo;
-        });
-
-        logger.debug('SEARCH', 'Results within 90-day window', { count: recentIds.length });
-
-        // Step 3: Hydrate from SQLite in temporal order
-        if (recentIds.length > 0) {
-          const limit = options.limit || 20;
-          results = this.sessionStore.getObservationsByIds(recentIds, { orderBy: 'date_desc', limit });
-          logger.debug('SEARCH', 'Hydrated observations from SQLite', { count: results.length });
-        }
-      }
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: `No observations found matching "${query}"`
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} observation(s) matching "${query}"\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeQueryFirstSearch(args, this.searchDeps(), {
+      hydrate: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      emptyMessage: (query) => `No observations found matching "${query}"`,
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      headerText: (count, query) => `Found ${count} observation(s) matching "${query}"`,
+      logLabel: 'observations',
+    });
   }
 
 
@@ -944,56 +789,14 @@ export class SearchManager {
    * Tool handler: search_sessions
    */
   async searchSessions(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { query, ...options } = normalized;
-    let results: SessionSummarySearchResult[] = [];
-
-    // Vector-first search via ChromaDB
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using hybrid semantic search for sessions', {});
-
-      // Step 1: Chroma semantic search (top 100)
-      const chromaResults = await this.queryChroma(query, 100, { doc_type: 'session_summary' });
-      logger.debug('SEARCH', 'Chroma returned semantic matches for sessions', { matchCount: chromaResults.ids.length });
-
-      if (chromaResults.ids.length > 0) {
-        // Step 2: Filter by recency (90 days)
-        const ninetyDaysAgo = Date.now() - SEARCH_CONSTANTS.RECENCY_WINDOW_MS;
-        const recentIds = chromaResults.ids.filter((_id, idx) => {
-          const meta = chromaResults.metadatas[idx];
-          return meta && meta.created_at_epoch > ninetyDaysAgo;
-        });
-
-        logger.debug('SEARCH', 'Results within 90-day window', { count: recentIds.length });
-
-        // Step 3: Hydrate from SQLite in temporal order
-        if (recentIds.length > 0) {
-          const limit = options.limit || 20;
-          results = this.sessionStore.getSessionSummariesByIds(recentIds, { orderBy: 'date_desc', limit });
-          logger.debug('SEARCH', 'Hydrated sessions from SQLite', { count: results.length });
-        }
-      }
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: `No sessions found matching "${query}"`
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} session(s) matching "${query}"\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((session, i) => this.formatter.formatSessionIndex(session, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeQueryFirstSearch(args, this.searchDeps(), {
+      chromaFilter: { doc_type: 'session_summary' },
+      hydrate: (ids, opts) => this.sessionStore.getSessionSummariesByIds(ids, opts),
+      emptyMessage: (query) => `No sessions found matching "${query}"`,
+      formatResult: (session, i) => this.formatter.formatSessionIndex(session, i),
+      headerText: (count, query) => `Found ${count} session(s) matching "${query}"`,
+      logLabel: 'sessions',
+    });
   }
 
 
@@ -1001,56 +804,14 @@ export class SearchManager {
    * Tool handler: search_user_prompts
    */
   async searchUserPrompts(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { query, ...options } = normalized;
-    let results: UserPromptSearchResult[] = [];
-
-    // Vector-first search via ChromaDB
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using hybrid semantic search for user prompts', {});
-
-      // Step 1: Chroma semantic search (top 100)
-      const chromaResults = await this.queryChroma(query, 100, { doc_type: 'user_prompt' });
-      logger.debug('SEARCH', 'Chroma returned semantic matches for prompts', { matchCount: chromaResults.ids.length });
-
-      if (chromaResults.ids.length > 0) {
-        // Step 2: Filter by recency (90 days)
-        const ninetyDaysAgo = Date.now() - SEARCH_CONSTANTS.RECENCY_WINDOW_MS;
-        const recentIds = chromaResults.ids.filter((_id, idx) => {
-          const meta = chromaResults.metadatas[idx];
-          return meta && meta.created_at_epoch > ninetyDaysAgo;
-        });
-
-        logger.debug('SEARCH', 'Results within 90-day window', { count: recentIds.length });
-
-        // Step 3: Hydrate from SQLite in temporal order
-        if (recentIds.length > 0) {
-          const limit = options.limit || 20;
-          results = this.sessionStore.getUserPromptsByIds(recentIds, { orderBy: 'date_desc', limit });
-          logger.debug('SEARCH', 'Hydrated user prompts from SQLite', { count: results.length });
-        }
-      }
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: query ? `No user prompts found matching "${query}"` : 'No user prompts found'
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} user prompt(s) matching "${query}"\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((prompt, i) => this.formatter.formatUserPromptIndex(prompt, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeQueryFirstSearch(args, this.searchDeps(), {
+      chromaFilter: { doc_type: 'user_prompt' },
+      hydrate: (ids, opts) => this.sessionStore.getUserPromptsByIds(ids, opts),
+      emptyMessage: (query) => query ? `No user prompts found matching "${query}"` : 'No user prompts found',
+      formatResult: (prompt, i) => this.formatter.formatUserPromptIndex(prompt, i),
+      headerText: (count, query) => `Found ${count} user prompt(s) matching "${query}"`,
+      logLabel: 'user prompts',
+    });
   }
 
 
@@ -1058,67 +819,17 @@ export class SearchManager {
    * Tool handler: find_by_concept
    */
   async findByConcept(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { concepts: concept, ...filters } = normalized;
-    let results: ObservationSearchResult[] = [];
-
-    // Metadata-first, semantic-enhanced search
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using metadata-first + semantic ranking for concept search', {});
-
-      // Step 1: SQLite metadata filter (get all IDs with this concept)
-      const metadataResults = this.sessionSearch.findByConcept(concept, filters);
-      logger.debug('SEARCH', 'Found observations with concept', { concept, count: metadataResults.length });
-
-      if (metadataResults.length > 0) {
-        // Step 2: Chroma semantic ranking (rank by relevance to concept)
-        const ids = metadataResults.map(obs => obs.id);
-        const chromaResults = await this.queryChroma(concept, Math.min(ids.length, 100));
-
-        // Intersect: Keep only IDs that passed metadata filter, in semantic rank order
-        const rankedIds: number[] = [];
-        for (const chromaId of chromaResults.ids) {
-          if (ids.includes(chromaId) && !rankedIds.includes(chromaId)) {
-            rankedIds.push(chromaId);
-          }
-        }
-
-        logger.debug('SEARCH', 'Chroma ranked results by semantic relevance', { count: rankedIds.length });
-
-        // Step 3: Hydrate in semantic rank order
-        if (rankedIds.length > 0) {
-          results = this.sessionStore.getObservationsByIds(rankedIds, { limit: filters.limit || 20 });
-          // Restore semantic ranking order
-          results.sort((a, b) => rankedIds.indexOf(a.id) - rankedIds.indexOf(b.id));
-        }
-      }
-    }
-
-    // Fall back to SQLite-only if Chroma unavailable or failed
-    if (results.length === 0) {
-      logger.debug('SEARCH', 'Using SQLite-only concept search', {});
-      results = this.sessionSearch.findByConcept(concept, filters);
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: `No observations found with concept "${concept}"`
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} observation(s) with concept "${concept}"\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeMetadataFirstSearch(args, this.searchDeps(), {
+      getMetadataIds: (n) => this.sessionSearch.findByConcept(n.concepts, n).map((obs: ObservationSearchResult) => obs.id),
+      chromaQueryString: (n) => n.concepts,
+      hydrateObservations: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      wrapInTryCatch: false,
+      getFallbackResults: (n) => this.sessionSearch.findByConcept(n.concepts, n),
+      emptyMessage: (n: any) => `No observations found with concept "${n.concepts}"`,
+      headerText: (count: number, n: any) => `Found ${count} observation(s) with concept "${n.concepts}"`,
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      logLabel: 'concept search',
+    });
   }
 
 
@@ -1248,68 +959,23 @@ export class SearchManager {
    * Tool handler: find_by_type
    */
   async findByType(args: any): Promise<any> {
-    const normalized = this.normalizeParams(args);
-    const { type, ...filters } = normalized;
-    const typeStr = Array.isArray(type) ? type.join(', ') : type;
-    let results: ObservationSearchResult[] = [];
-
-    // Metadata-first, semantic-enhanced search
-    if (this.chromaSync) {
-      logger.debug('SEARCH', 'Using metadata-first + semantic ranking for type search', {});
-
-      // Step 1: SQLite metadata filter (get all IDs with this type)
-      const metadataResults = this.sessionSearch.findByType(type, filters);
-      logger.debug('SEARCH', 'Found observations with type', { type: typeStr, count: metadataResults.length });
-
-      if (metadataResults.length > 0) {
-        // Step 2: Chroma semantic ranking (rank by relevance to type)
-        const ids = metadataResults.map(obs => obs.id);
-        const chromaResults = await this.queryChroma(typeStr, Math.min(ids.length, 100));
-
-        // Intersect: Keep only IDs that passed metadata filter, in semantic rank order
-        const rankedIds: number[] = [];
-        for (const chromaId of chromaResults.ids) {
-          if (ids.includes(chromaId) && !rankedIds.includes(chromaId)) {
-            rankedIds.push(chromaId);
-          }
-        }
-
-        logger.debug('SEARCH', 'Chroma ranked results by semantic relevance', { count: rankedIds.length });
-
-        // Step 3: Hydrate in semantic rank order
-        if (rankedIds.length > 0) {
-          results = this.sessionStore.getObservationsByIds(rankedIds, { limit: filters.limit || 20 });
-          // Restore semantic ranking order
-          results.sort((a, b) => rankedIds.indexOf(a.id) - rankedIds.indexOf(b.id));
-        }
-      }
-    }
-
-    // Fall back to SQLite-only if Chroma unavailable or failed
-    if (results.length === 0) {
-      logger.debug('SEARCH', 'Using SQLite-only type search', {});
-      results = this.sessionSearch.findByType(type, filters);
-    }
-
-    if (results.length === 0) {
-      return {
-        content: [{
-          type: 'text' as const,
-          text: `No observations found with type "${typeStr}"`
-        }]
-      };
-    }
-
-    // Format as table
-    const header = `Found ${results.length} observation(s) with type "${typeStr}"\n\n${this.formatter.formatTableHeader()}`;
-    const formattedResults = results.map((obs, i) => this.formatter.formatObservationIndex(obs, i));
-
-    return {
-      content: [{
-        type: 'text' as const,
-        text: header + '\n' + formattedResults.join('\n')
-      }]
-    };
+    return executeMetadataFirstSearch(args, this.searchDeps(), {
+      getMetadataIds: (n) => this.sessionSearch.findByType(n.type, n).map((obs: ObservationSearchResult) => obs.id),
+      chromaQueryString: (n) => Array.isArray(n.type) ? n.type.join(', ') : n.type,
+      hydrateObservations: (ids, opts) => this.sessionStore.getObservationsByIds(ids, opts),
+      wrapInTryCatch: false,
+      getFallbackResults: (n) => this.sessionSearch.findByType(n.type, n),
+      emptyMessage: (n: any) => {
+        const typeStr = Array.isArray(n.type) ? n.type.join(', ') : n.type;
+        return `No observations found with type "${typeStr}"`;
+      },
+      headerText: (count: number, n: any) => {
+        const typeStr = Array.isArray(n.type) ? n.type.join(', ') : n.type;
+        return `Found ${count} observation(s) with type "${typeStr}"`;
+      },
+      formatResult: (obs, i) => this.formatter.formatObservationIndex(obs, i),
+      logLabel: 'type search',
+    });
   }
 
 

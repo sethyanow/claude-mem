@@ -1,10 +1,11 @@
 ---
 id: clmem-n08
 title: 'Decompose SearchManager: extract shared search execution pattern'
-status: open
+status: active
 type: task
 parent: clmem-l6j
 ---
+
 
 ## Context
 Sixth task in Phase 1 (clmem-l6j). SearchManager has 1,884 lines with 8 search methods that follow two nearly identical structural patterns. The duplication is across `decisions()`, `changes()`, `howItWorks()`, `findByConcept()`, `findByType()` (Pattern B: metadata-first + Chroma ranking) and `searchObservations()`, `searchSessions()`, `searchUserPrompts()` (Pattern A: Chroma semantic + recency filter). Both patterns share: normalize params → Chroma query → DB hydrate → sort → format → return MCP response.
