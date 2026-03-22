@@ -5,10 +5,10 @@ import {
   unregisterProcess,
   getProcessBySession,
   getActiveCount,
-  getActiveProcesses,
   waitForSlot,
   ensureProcessExit,
 } from '../../src/services/worker/ProcessRegistry.js';
+import { getSupervisor } from '../../src/supervisor/index.js';
 
 /**
  * Create a mock ChildProcess that behaves like a real one for testing.
@@ -36,11 +36,9 @@ function createMockProcess(overrides: { exitCode?: number | null; killed?: boole
   return mock;
 }
 
-// Helper to clear registry between tests by unregistering all
+// Helper to clear registry between tests — clears ALL entries including orphans
 function clearRegistry() {
-  for (const p of getActiveProcesses()) {
-    unregisterProcess(p.pid);
-  }
+  getSupervisor().getRegistry().clear();
 }
 
 describe('ProcessRegistry', () => {
@@ -199,6 +197,36 @@ describe('ProcessRegistry', () => {
       expect(elapsed).toBeGreaterThan(90);
       // Process is unregistered regardless (safety net)
       expect(getActiveCount()).toBe(0);
+    });
+  });
+
+  describe('orphaned entry handling', () => {
+    it('should not count orphaned registry entries in getActiveCount', () => {
+      // Inject an orphaned entry: metadata in registry but NO runtime ChildProcess ref
+      getSupervisor().registerProcess('sdk:999:12345', {
+        pid: 12345,
+        type: 'sdk',
+        sessionId: 999,
+        startedAt: new Date().toISOString(),
+      });
+      // No processRef passed — entry exists in entries map but not runtimeProcesses
+
+      // getActiveCount should NOT count this orphan
+      expect(getActiveCount()).toBe(0);
+    });
+
+    it('should not block waitForSlot on orphaned entries', async () => {
+      // Inject an orphaned entry (metadata only, no runtime process)
+      getSupervisor().registerProcess('sdk:998:54321', {
+        pid: 54321,
+        type: 'sdk',
+        sessionId: 998,
+        startedAt: new Date().toISOString(),
+      });
+
+      // waitForSlot(2) should resolve immediately — orphan doesn't count toward the limit
+      await waitForSlot(2);
+      // If this hangs or times out, the orphan is being counted
     });
   });
 });

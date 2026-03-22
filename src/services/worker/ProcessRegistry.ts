@@ -97,7 +97,7 @@ export function getProcessBySession(sessionDbId: number): TrackedProcess | undef
  * Get count of active processes in the registry
  */
 export function getActiveCount(): number {
-  return getSupervisor().getRegistry().getAll().filter(record => record.type === 'sdk').length;
+  return getTrackedProcesses().length;
 }
 
 // Waiters for pool slots - resolved when a process exits and frees a slot
