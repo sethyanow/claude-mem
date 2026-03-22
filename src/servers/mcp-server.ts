@@ -199,10 +199,22 @@ export const tools = [
           type: 'array',
           items: { type: 'number' },
           description: 'Array of observation IDs to fetch (required)'
+        },
+        orderBy: {
+          type: 'string',
+          enum: ['date_desc', 'date_asc'],
+          description: 'Sort order for results (default: date_desc)'
+        },
+        limit: {
+          type: 'integer',
+          description: 'Maximum number of observations to return'
+        },
+        project: {
+          type: 'string',
+          description: 'Filter observations by project path'
         }
       },
-      required: ['ids'],
-      additionalProperties: true
+      required: ['ids']
     },
     handler: async (args: any) => {
       return await callWorkerAPIPost('/api/observations/batch', args);

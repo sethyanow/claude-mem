@@ -92,9 +92,9 @@ describe('timeline tool schema', () => {
 });
 
 describe('get_observations schema', () => {
-  it('is unchanged — still has additionalProperties: true', () => {
+  it('does not have additionalProperties: true', () => {
     const getObs = findTool('get_observations');
-    expect(getObs.inputSchema.additionalProperties).toBe(true);
+    expect(getObs.inputSchema.additionalProperties).not.toBe(true);
   });
 
   it('still requires ids array', () => {
@@ -103,6 +103,28 @@ describe('get_observations schema', () => {
     const ids = (getObs.inputSchema.properties as any)?.ids;
     expect(ids).toBeDefined();
     expect(ids.type).toBe('array');
+  });
+
+  it('has explicit orderBy property with enum values', () => {
+    const getObs = findTool('get_observations');
+    const orderBy = (getObs.inputSchema.properties as any)?.orderBy;
+    expect(orderBy).toBeDefined();
+    expect(orderBy.type).toBe('string');
+    expect(orderBy.enum).toEqual(['date_desc', 'date_asc']);
+  });
+
+  it('has explicit limit property', () => {
+    const getObs = findTool('get_observations');
+    const limit = (getObs.inputSchema.properties as any)?.limit;
+    expect(limit).toBeDefined();
+    expect(limit.type).toBe('integer');
+  });
+
+  it('has explicit project property', () => {
+    const getObs = findTool('get_observations');
+    const project = (getObs.inputSchema.properties as any)?.project;
+    expect(project).toBeDefined();
+    expect(project.type).toBe('string');
   });
 });
 

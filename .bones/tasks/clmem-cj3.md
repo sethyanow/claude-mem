@@ -42,7 +42,7 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [x] SearchManager decomposed: all 13 methods delegate — 8 via shared executeQueryFirstSearch/executeMetadataFirstSearch, 5 via dedicated modules (multi-search, find-by-file, timeline-handler, context-timeline, query-timeline). SearchManager 1550→490 lines.
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
-- [ ] No `additionalProperties: true` on MCP memory tool schemas — get_observations at mcp-server.ts:205 still has it. Test at mcp-server-tools.test.ts:95-98 asserts it should stay.
+- [x] No `additionalProperties: true` on MCP memory tool schemas — get_observations now has explicit properties for orderBy, limit, project. Test updated to assert additionalProperties is NOT true.
 - [x] `__IMPORTANT` tool removed from MCP server
 - [x] smart_* tool descriptions reference LSP as primary, position self as fallback
 

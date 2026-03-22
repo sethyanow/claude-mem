@@ -1,11 +1,13 @@
 ---
 id: clmem-pct
 title: 'Fix get_observations schema: replace additionalProperties with explicit params'
-status: open
+status: closed
 type: task
 priority: 2
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -18,15 +20,15 @@ Parent epic clmem-cj3 SC8: "No `additionalProperties: true` on MCP memory tool s
 3. Update test at `mcp-server-tools.test.ts:95-98` to assert `additionalProperties` is NOT true
 
 ## Implementation
-1. `src/servers/mcp-server.ts:196-206` — add properties, remove additionalProperties
-2. `tests/servers/mcp-server-tools.test.ts:94-98` — flip assertion
+1. `src/servers/mcp-server.ts:196-206` — add `orderBy` (enum: `date_desc`|`date_asc`), `limit` (integer), `project` (string) to properties; remove `additionalProperties: true`
+2. `tests/servers/mcp-server-tools.test.ts:94-98` — flip `additionalProperties` assertion AND add assertions that `orderBy`, `limit`, `project` properties exist with correct types
 3. Verify: `npm test -- tests/servers/mcp-server-tools.test.ts`
 
 ## Success Criteria
-- [ ] `get_observations` schema has explicit `properties` for `ids`, `orderBy`, `limit`, `project`
-- [ ] No `additionalProperties: true` on `get_observations` schema
-- [ ] MCP tool tests pass
-- [ ] `npm run build-and-sync` succeeds
+- [x] `get_observations` schema has explicit `properties` for `ids`, `orderBy`, `limit`, `project`
+- [x] No `additionalProperties: true` on `get_observations` schema
+- [x] MCP tool tests pass
+- [x] `npm run build-and-sync` succeeds
 
 ## Anti-Patterns
 - NO removing params the worker API actually accepts — define them, don't drop them
