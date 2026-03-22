@@ -1,12 +1,13 @@
 ---
 id: clmem-jmj
 title: 'Phase 2: MCP Tool Cleanup'
-status: open
+status: closed
 type: epic
 priority: 2
 depends_on: [clmem-l6j, clmem-5qq, clmem-9pc]
 parent: clmem-cj3
 ---
+
 
 
 

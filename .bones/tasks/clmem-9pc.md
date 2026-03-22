@@ -1,10 +1,13 @@
 ---
 id: clmem-9pc
 title: 'Phase 2 Acceptance: MCP Tool Cleanup'
-status: open
+status: closed
 type: task
 parent: clmem-jmj
 ---
+
+
+
 
 
 
@@ -14,7 +17,7 @@ Phase 2 (MCP Tool Cleanup) implementation is complete. Task clmem-5qq delivered 
 
 ## Agent Documentation
 
-- [ ] CLAUDE.md: remove smart_* tool ban if descriptions now correctly position them as fallbacks
+- [x] CLAUDE.md: smart_* tool ban softened to warning per user decision (prefer LSP, use smart_* as fallback)
 
 ## User Walkthrough
 
@@ -42,6 +45,10 @@ Phase 2 (MCP Tool Cleanup) implementation is complete. Task clmem-5qq delivered 
    ```
 
 ## Success Criteria
-- [ ] Agent documentation updated (CLAUDE.md smart_* tool ban reviewed)
-- [ ] User walkthrough steps all produce expected output
-- [ ] User closes this task to signal acceptance
+- [x] Agent documentation updated (CLAUDE.md smart_* tool ban reviewed)
+- [x] User walkthrough steps all produce expected output
+- [x] User closes this task to signal acceptance
+
+## Log
+
+- [2026-03-22T07:31:21Z] [Seth] Acceptance walkthrough executed. All 4 steps pass: (1) 0 __IMPORTANT refs, 7 tool entries, (2) 14/14 MCP tool tests pass, (3) fallback/Lightweight grep matches confirm smart_* reframing, (4) DP().catch in CJS build confirms main() invocation. CLAUDE.md smart_* ban softened to warning per user decision.
