@@ -1,12 +1,13 @@
 ---
 id: clmem-xgk
 title: 'Complete SessionStore decomposition: delegate CRUD and queries to extracted modules'
-status: active
+status: closed
 type: task
 priority: 1
 owner: Seth
 parent: clmem-cj3
 ---
+
 
 
 
@@ -65,11 +66,11 @@ Parent epic clmem-cj3 SC4. SessionStore is 1605 lines (verified). Phase 1 extrac
 7. Run full test suite, `tsc --noEmit`, `npm run build-and-sync`
 
 ## Success Criteria
-- [ ] No inline SQL in SessionStore — all queries live in sub-modules (close() exempt: no SQL)
-- [ ] All existing tests pass (same count, no new test failures)
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] No orphaned extracted functions remain (every exported function in sub-modules has at least one caller)
+- [x] No inline SQL in SessionStore — all queries live in sub-modules (close() exempt: no SQL)
+- [x] All existing tests pass (same count, no new test failures)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] No orphaned extracted functions remain (every exported function in sub-modules has at least one caller)
 
 ## Anti-Patterns
 - NO behavior changes — delegation must preserve identical runtime behavior. Tests are the proof.
