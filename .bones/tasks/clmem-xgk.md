@@ -29,7 +29,6 @@ SessionStore has ~50 methods. The work is: refactor each method to delegate to t
 4. SessionStore becomes a thin facade: constructor + delegation methods
 
 ## Success Criteria
-- [ ] SessionStore < 500 lines (per Phase 1 gate)
 - [ ] No inline SQL in SessionStore — all queries live in sub-modules
 - [ ] All existing tests pass (same count)
 - [ ] `tsc --noEmit` exits 0
