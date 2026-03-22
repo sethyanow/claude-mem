@@ -14,6 +14,7 @@ parent: clmem-cj3
 
 
 
+
 ## Context
 Parent epic clmem-cj3 SC5. SearchManager is 1550 lines. 8 simpler methods already delegate to shared `executeQueryFirstSearch`/`executeMetadataFirstSearch` in `search/execute.ts`. 5 complex methods remain inline:
 
@@ -71,3 +72,4 @@ These methods don't fit the existing `QueryFirstConfig`/`MetadataFirstConfig` pa
 ## Log
 
 - [2026-03-22T18:42:58Z] [Seth] Extracted 5 methods (search, findByFile, timeline, getContextTimeline, getTimelineByQuery) into dedicated modules under search/. SearchManager 1550→490 lines. 13 delegation tests pass. tsc clean (fixed pre-existing TS errors at lines 1177/1411 via as-any cast on session data). build-and-sync succeeds. No behavior changes.
+- [2026-03-22T18:44:03Z] [Seth] Debrief: Clean extraction of 5 methods. as-any workaround for TimelineItem session type mismatch (pre-existing). Logger-usage-standards test caught missing import. Reflections: No surprises beyond logger test. Skeleton was accurate. User corrected early investigation tangent — wrote feedback memory.
