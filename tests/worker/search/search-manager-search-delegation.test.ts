@@ -77,4 +77,36 @@ describe('SearchManager search method delegation', () => {
       expect(source).not.toContain(INLINE_MARKERS.formatHeader);
     });
   });
+
+  describe('Pattern C — complex methods (extracted to dedicated modules)', () => {
+    it('findByFile should delegate (no inline ranking/formatting)', () => {
+      const source = SearchManager.prototype.findByFile.toString();
+      expect(source).not.toContain(INLINE_MARKERS.rankingVar);
+      expect(source).not.toContain(INLINE_MARKERS.formatHeader);
+    });
+
+    it('search should delegate (no inline chroma/formatting/date filtering)', () => {
+      const source = SearchManager.prototype.search.toString();
+      expect(source).not.toContain('chromaFailed');
+      expect(source).not.toContain('formatSearchTableHeader');
+    });
+
+    it('timeline should delegate (no inline recency filtering/day grouping)', () => {
+      const source = SearchManager.prototype.timeline.toString();
+      expect(source).not.toContain(INLINE_MARKERS.recencyFilter);
+      expect(source).not.toContain('dayMap');
+    });
+
+    it('getContextTimeline should delegate (no inline day grouping/rendering)', () => {
+      const source = SearchManager.prototype.getContextTimeline.toString();
+      expect(source).not.toContain('dayMap');
+      expect(source).not.toContain('estimateTokens');
+    });
+
+    it('getTimelineByQuery should delegate (no inline recency filtering/day grouping)', () => {
+      const source = SearchManager.prototype.getTimelineByQuery.toString();
+      expect(source).not.toContain(INLINE_MARKERS.recencyFilter);
+      expect(source).not.toContain('dayMap');
+    });
+  });
 });

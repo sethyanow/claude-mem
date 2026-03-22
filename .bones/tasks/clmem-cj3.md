@@ -35,7 +35,7 @@ R7. Rewrite smart_* tool descriptions to position as structural grep alternative
 R8. Replace `additionalProperties: true` on memory tool schemas with explicit parameter definitions.
 
 ## Success Criteria
-- [x] `tsc --noEmit` exits 0
+- [ ] `tsc --noEmit` exits 0 — REGRESSED: revert of SearchManager extraction re-introduced 2 TS errors (lines 1177, 1411)
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass — 7 worker-json-status failures are pre-existing (clmem-kqm). Process-registry tests (clmem-g64) now pass (verified 2026-03-22).
 - [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — all 35 CRUD/query methods delegate to sub-modules. SessionStore is 570 lines (down from 1605). Sub-modules have callers.

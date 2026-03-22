@@ -1,11 +1,14 @@
 ---
 id: clmem-kq9
 title: 'Decompose remaining SearchManager methods: search, timeline, getContextTimeline, getTimelineByQuery, findByFile'
-status: open
+status: active
 type: task
 priority: 1
+owner: Seth
 parent: clmem-cj3
 ---
+
+
 
 
 
@@ -22,11 +25,26 @@ These methods don't fit the existing `QueryFirstConfig`/`MetadataFirstConfig` pa
 
 ## Requirements
 1. Extract each method's logic into dedicated modules under `search/`
-2. SearchManager retains the method signatures as a thin facade
+2. SearchManager retains the method signatures as a thin facade — each method body is a one-liner delegation call
 3. No behavior changes — identical runtime output
 
+## Implementation
+
+1. **Extract `findByFile()`** → `search/find-by-file.ts`. Smallest method (~120 lines). Export a function that takes `SearchDeps`-style dependencies + the method's params. SearchManager.findByFile becomes `return findByFile(this.deps, params)`.
+2. **Extract `search()`** → `search/multi-search.ts`. ~270 lines. Has inline `CombinedResult` interface — move to `search/types.ts` or keep local. Takes SearchDeps + params.
+3. **Extract `timeline()`** → `search/timeline-handler.ts`. ~270 lines. Uses `TimelineItem` from `TimelineService.ts`, chroma ranking, day grouping, icon/table rendering. Takes SearchDeps + params.
+4. **Extract `getContextTimeline()`** → `search/context-timeline.ts`. ~210 lines. **Has pre-existing TS error at line 1177** (session data type mismatch with `TimelineItem`). Fix the type error during extraction by adding missing fields or using correct query that returns full session data.
+5. **Extract `getTimelineByQuery()`** → `search/query-timeline.ts`. ~230 lines. **Has pre-existing TS error at line 1411** (same `TimelineItem` mismatch). Fix type error same as step 4.
+6. **Extend delegation test** — add 5 new test cases to `tests/worker/search/search-manager-search-delegation.test.ts` covering all 5 extracted methods. Use same `Function.prototype.toString()` pattern. Verify method bodies no longer contain inline logic markers.
+7. **Verify** — `tsc --noEmit` exits 0, `npm run build-and-sync` succeeds, all existing tests pass.
+
+**Dependency injection pattern:** Each extracted module exports a function. The function receives the dependencies it needs (sessionStore, sessionSearch, chromaSync, formatter, etc.) as explicit parameters — same pattern as `executeQueryFirstSearch`/`executeMetadataFirstSearch` in `search/execute.ts`. No class instances, no factory patterns.
+
 ## Success Criteria
-- [ ] Each extracted method's logic in its own module under `search/`
+- [ ] Each of the 5 methods extracted to its own module: `search/find-by-file.ts`, `search/multi-search.ts`, `search/timeline-handler.ts`, `search/context-timeline.ts`, `search/query-timeline.ts`
+- [ ] SearchManager method bodies are one-liner delegations (verifiable via delegation test)
+- [ ] Delegation test extended: 5 new cases in `search-manager-search-delegation.test.ts` covering all 5 methods
+- [ ] Pre-existing TypeScript errors at lines 1177 and 1411 fixed during extraction (session data → `TimelineItem` type mismatch)
 - [ ] All existing tests pass
 - [ ] `tsc --noEmit` exits 0
 - [ ] `npm run build-and-sync` succeeds
@@ -35,8 +53,15 @@ These methods don't fit the existing `QueryFirstConfig`/`MetadataFirstConfig` pa
 - NO forcing complex methods into `executeQueryFirstSearch`/`executeMetadataFirstSearch` — extract along natural seams
 - NO behavior changes — tests prove identical runtime behavior
 - NO new abstract classes or interfaces — plain functions or small focused classes
+- NO copying method bodies without converting SearchManager methods to delegate — the facade must be thin, not duplicated
+- NO TODO/stub placeholders — each extraction is complete or not done
+- NO ignoring the pre-existing TypeScript errors — they must be fixed as part of extraction, not carried forward
 
 ## Key Considerations
-- `timeline()`, `getContextTimeline()`, and `getTimelineByQuery()` share significant timeline rendering logic (day grouping, icon selection, table formatting) — this could become a shared `TimelineRenderer` or similar
+- `timeline()`, `getContextTimeline()`, and `getTimelineByQuery()` share timeline rendering logic (day grouping, icon selection, table formatting). During extraction, duplication across these 3 modules is acceptable — a shared `TimelineRenderer` can be factored out in a follow-up if warranted. The goal is extraction, not deduplication.
 - `search()` has its own chroma ranking + multi-type hydration flow that's distinct from the query-first/metadata-first patterns
-- `findByFile()` is the smallest and simplest — good candidate for first extraction
+- `findByFile()` is the smallest and simplest — first extraction to establish the pattern
+- **TypeScript errors:** Lines 1177 (`getContextTimeline`) and 1411 (`getTimelineByQuery`) have `TimelineItem` type mismatches. The session query returns basic session fields but `TimelineItem.data` expects `SessionSummarySearchResult` (which includes `investigated`, `learned`, `files_read`, `files_edited`, etc.). Fix: either widen `TimelineItem` to accept basic session data, or use the correct query that returns full `SessionSummarySearchResult` data. Examine what `TimelineService` expects vs what the store query returns.
+- **`this` context:** Methods reference `this.sessionStore`, `this.sessionSearch`, `this.chromaSync`, `this.formatter`, `this.timelineService`, `this.orchestrator`. The `searchDeps()` method at line 58 already packages some of these. Extracted functions should receive needed deps as explicit params.
+- **Circular imports:** New modules under `search/` import from `../sqlite/types`, `../sync/ChromaSync`, etc. Verify no circular dependency chains. The existing `search/execute.ts` already does this successfully — follow the same import pattern.
+- **Prior attempt reverted:** Git commit `7cc7f507` reverted a previous extraction. The reverted files were: `search/context-timeline.ts`, `search/find-by-file.ts`, `search/multi-search.ts`, `search/query-timeline.ts`, `search/timeline-handler.ts`. Same target file names — the approach was correct, execution had issues. Do not investigate what went wrong (that's archaeology) — execute fresh using TDD.
