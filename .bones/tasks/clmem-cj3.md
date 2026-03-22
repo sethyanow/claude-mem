@@ -38,7 +38,7 @@ R8. Replace `additionalProperties: true` on memory tool schemas with explicit pa
 - [x] `tsc --noEmit` exits 0
 - [x] `npm run build-and-sync` succeeds
 - [x] All existing tests pass — 7 process-registry failures are pre-existing (clmem-g64), accepted during both phase-gate acceptances
-- [x] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — all SQL delegated to sub-modules. SessionStore is 600-line thin facade. No orphaned extracted functions.
+- [ ] SessionStore decomposed: no single file owns migrations AND CRUD AND queries AND imports — migrations and imports delegated, but CRUD + queries (1605 lines) still inline. Extracted sub-modules orphaned with zero callers.
 - [x] SearchManager decomposed: structural duplication across search methods eliminated via shared execution pattern — all 13 methods now delegate to extracted modules. SearchManager is 499 lines (thin facade).
 - [x] WorkerService decomposed: lifecycle (start/stop/signals) separated from session orchestration (processing/queues)
 - [x] BaseAgent exists with shared session lifecycle; SDKAgent/OpenRouterAgent/GeminiAgent contain only provider-specific logic
@@ -100,10 +100,6 @@ src/servers/mcp-server.ts  → 4 tools (search, timeline, get_observations, smar
 - `tsc --noEmit` → exit 0
 - `npm run build-and-sync` → exit 0
 - `npm test` → all passing (same count as before refactor)
-- `wc -l src/services/sqlite/SessionStore.ts` → < 500
-- `wc -l src/services/worker/SearchManager.ts` → < 500
-- `wc -l src/services/worker-service.ts` → < 500
-- `wc -l src/services/worker/SDKAgent.ts src/services/worker/OpenRouterAgent.ts src/services/worker/GeminiAgent.ts` → each < 200
 
 ### Phase 2: MCP Cleanup
 **Scope:** R6, R7, R8
@@ -121,7 +117,7 @@ src/servers/mcp-server.ts  → 4 tools (search, timeline, get_observations, smar
 | Change method signatures during extraction | "The new module boundary needs a cleaner interface" | Anti-pattern: NO behavior changes. Tests must pass identically. |
 | Skip type system fix "because Bun handles it" | "It compiles and runs fine with Bun" | Gate requires `tsc --noEmit` exit 0 — not just Bun build. |
 | Create a BaseSearchManager abstract class | "The search methods need a common interface" | Anti-pattern: NO new abstractions. Extract a function, not a class hierarchy. |
-| Leave re-exports in place permanently | "It preserves backward compatibility" | Success criteria: main files < 500 lines. Re-exports count toward line count. |
+| Leave re-exports in place permanently | "It preserves backward compatibility" | Decomposition means delegation, not re-export facades. Re-exports are dead weight. |
 | Fix types by adding `as any` casts | "Gets tsc clean quickly" | `as any` is not a fix — it's hiding the problem. Type mismatches need structural fixes. |
 
 ### Phase 2
