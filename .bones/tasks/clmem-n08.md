@@ -8,6 +8,7 @@ parent: clmem-l6j
 
 
 
+
 ## Context
 Sixth task in Phase 1 (clmem-l6j). SearchManager has 1,884 lines with 8 search methods that follow two nearly identical structural patterns. The duplication is across `decisions()`, `changes()`, `howItWorks()`, `findByConcept()`, `findByType()` (Pattern B: metadata-first + Chroma ranking) and `searchObservations()`, `searchSessions()`, `searchUserPrompts()` (Pattern A: Chroma semantic + recency filter). Both patterns share: normalize params → Chroma query → DB hydrate → sort → format → return MCP response.
 
@@ -102,3 +103,7 @@ Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on Sear
 - The formatter varies: `formatObservationIndex` for observations, `formatSessionIndex` for sessions, `formatUserPromptIndex` for prompts. The shared function config must accept a formatter function reference.
 - SearchManager line count should drop substantially (8 methods × ~60 lines each ≈ ~480 lines of duplication).
 - **Verify "baseline 34" test count** at execution time — run `bun test` before starting to confirm current test state.
+
+## Log
+
+- [2026-03-22T03:06:56Z] [Seth] Debrief: Pure structural refactoring, no workarounds. emptyMessage/headerText config types needed string→function change for methods that interpolate params. orderBy type narrowing from string to literal union required. 1884→1550 lines (334 reduced). Reflections: findByFile exclusion was correct SRE call. changes() multi-source dedup more complex than skeleton suggested (~30 lines helpers). All Phase 1 criteria now met. Next: acceptance task clmem-vpg for Phase 1 closure.
