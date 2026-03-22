@@ -1,10 +1,11 @@
 ---
 id: clmem-g64
 title: 'Fix process-registry test failures: getActiveCount off-by-one'
-status: active
+status: closed
 type: bug
 priority: 2
 ---
+
 
 
 
@@ -63,11 +64,11 @@ Run: `npx bun test 2>&1 > /tmp/full-suite.txt`
 Commit referencing clmem-g64.
 
 ## Success Criteria
-- [ ] All tests in `tests/worker/process-registry.test.ts` pass (12 existing + 2 new regression tests)
-- [ ] `getActiveCount()` does not count orphaned registry entries
-- [ ] `waitForSlot()` does not block on orphaned entries
-- [ ] Regression test proves orphaned entries are excluded from count
-- [ ] Test `clearRegistry()` helper clears orphaned entries (not just those visible via `getActiveProcesses()`)
+- [x] All tests in `tests/worker/process-registry.test.ts` pass (12 existing + 2 new regression tests)
+- [x] `getActiveCount()` does not count orphaned registry entries
+- [x] `waitForSlot()` does not block on orphaned entries
+- [x] Regression test proves orphaned entries are excluded from count
+- [x] Test `clearRegistry()` helper clears orphaned entries (not just those visible via `getActiveProcesses()`)
 
 ## Anti-Patterns
 - Do NOT add test isolation via temp directory for `supervisor.json` — that's a larger refactor out of scope

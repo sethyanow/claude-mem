@@ -114,3 +114,4 @@
 {"timestamp":"2026-03-22T19:48:33.010284+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-cj3","details":{"notes":null}}
 {"timestamp":"2026-03-22T20:02:17.866346+00:00","actor":"Seth","event_type":"logged","task_id":"clmem-g64","details":{"message":"Diagnosis complete. Root cause: getActiveCount() counts ALL registry entries (type=sdk), getActiveProcesses() only returns entries with runtime ChildProcess refs. Orphaned entries inflate count but are invisible to clearRegistry. Fix task updated with 5-step implementation plan. Confidence: HIGH — divergence reproduced directly."}}
 {"timestamp":"2026-03-22T20:06:30.527522+00:00","actor":"Seth","event_type":"updated","task_id":"clmem-g64","details":{"status":"active"}}
+{"timestamp":"2026-03-22T20:11:11.852560+00:00","actor":"Seth","event_type":"closed","task_id":"clmem-g64","details":{"notes":null}}
