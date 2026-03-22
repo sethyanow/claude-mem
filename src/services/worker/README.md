@@ -7,7 +7,7 @@ The Worker Service is an Express HTTP server that handles all claude-mem operati
 ## Request Flow
 
 ```
-Hook (plugin/scripts/*-hook.js)
+Hook (plugin/hooks/hooks.json → bun-runner.js → worker-service.cjs)
   → HTTP Request to Worker (localhost:37777)
     → Route Handler (http/routes/*.ts)
       → MCP Server Tool (for search) OR Service Layer (for session/data)

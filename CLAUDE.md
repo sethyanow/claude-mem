@@ -6,7 +6,7 @@ Claude-mem is a Claude Code plugin providing persistent memory across sessions. 
 
 **5 Lifecycle Hooks**: SessionStart → UserPromptSubmit → PostToolUse → Summary → SessionEnd
 
-**Hooks** (`src/hooks/*.ts`) - TypeScript → ESM, built to `plugin/scripts/*-hook.js`
+**Hooks** (`plugin/hooks/hooks.json`) - Hook definitions invoke `plugin/scripts/worker-service.cjs` via `bun-runner.js`; shared hook utilities in `src/hooks/hook-response.ts`
 
 **Worker Service** (`src/services/worker-service.ts`) - Express API on port 37777, Bun-managed, handles AI processing asynchronously
 
@@ -66,7 +66,7 @@ See `private/context/claude-code/exit-codes.md` for full hook behavior matrix.
 ## Documentation
 
 **Public Docs**: https://docs.claude-mem.ai (Mintlify)
-**Source**: `docs/public/` - MDX files, edit `docs.json` for navigation
+**Source**: `docs/public/` - MDX files, edit `docs/public/docs.json` for navigation
 **Deploy**: Auto-deploys from GitHub on push to main
 
 ## Pro Features Architecture
