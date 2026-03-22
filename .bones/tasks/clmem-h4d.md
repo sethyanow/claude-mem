@@ -1,10 +1,11 @@
 ---
 id: clmem-h4d
 title: 'Decompose SessionStore: delegate import methods to import/bulk.ts'
-status: open
+status: active
 type: task
 parent: clmem-l6j
 ---
+
 
 ## Context
 Fifth task in Phase 1 (clmem-l6j). Follows the same delegation pattern as clmem-luq (migrations → MigrationRunner). SessionStore has 4 import methods (~200 lines, lines 1523-1722) that are duplicates of the modular functions already extracted to `src/services/sqlite/import/bulk.ts` (237 lines).
@@ -57,13 +58,13 @@ Run tests that exercise the import path. Check `DataRoutes.ts` callers still com
 Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SessionStore shows ~150-180 line reduction (method bodies removed, signatures retained as wrappers).
 
 ## Success Criteria
-- [ ] SessionStore import methods delegate to import/bulk.ts functions (no direct SQL in SessionStore)
-- [ ] Import method bodies replaced with one-liner delegation wrappers
-- [ ] DataRoutes.ts callers still work (no interface change)
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (no new failures beyond baseline 34)
-- [ ] No runtime behavior changes — import dedup and insert logic identical
+- [x] SessionStore import methods delegate to import/bulk.ts functions (no direct SQL in SessionStore)
+- [x] Import method bodies replaced with one-liner delegation wrappers
+- [x] DataRoutes.ts callers still work (no interface change)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (no new failures beyond baseline 34)
+- [x] No runtime behavior changes — import dedup and insert logic identical
 
 ## Anti-Patterns
 - NO changing import logic — delegate only, preserve identical behavior
@@ -71,9 +72,16 @@ Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on Sess
 - NO removing SessionStore's import methods entirely — callers depend on the instance methods; only bodies change
 - FORBIDDEN: assuming modular functions are identical without content spot-check
 - FORBIDDEN: renaming or restructuring import/bulk.ts
+- FORBIDDEN: delegating fewer than all 4 methods — partial delegation is not "done"
+- FORBIDDEN: writing a behavioral equivalence test that passes both before and after delegation — the RED test must fail before delegation and pass after
 
 ## Key Considerations
 - The modular functions take `db: Database` as first argument; SessionStore methods use `this.db`. The wrapper passes `this.db` to bridge the interface.
 - The `ImportResult` type from import/bulk.ts (`{ imported: boolean; id: number }`) matches SessionStore's inline return type — no type conflict.
 - Unlike migrations (where MigrationRunner had `runAllMigrations()` as a single entry point), imports are 4 independent functions. Each gets its own wrapper.
 - Line reduction will be smaller than migrations (~150-180 lines) because the wrapper signatures are retained. The bodies shrink to one-liners but the signatures stay.
+- **SRE-verified (this session):** All 4 methods content-identical between SessionStore and import/bulk.ts. Only difference: `this.db` → `db` parameter. Database type (`bun:sqlite.Database`) matches in both files.
+- **SRE-verified:** DataRoutes.ts callers confirmed at lines 334, 346, 358, 370. Only caller of SessionStore import methods.
+- **SRE-verified:** Baseline test count: 1178 pass, 34 fail, 3 skip across 74 files.
+- **First-time activation:** The modular functions in import/bulk.ts have zero external references — they are currently unused duplicates. Delegation will be their first actual invocation. No existing tests exercise them.
+- **Bun module mocking:** Step 2's spy-based test requires `mock.module()` or equivalent in Bun's test runner. Verify Bun supports intercepting module-level imports before writing the test. If not available, an alternative RED test: verify SessionStore has a module-level import from `./import/bulk.js` (absent before delegation, present after).

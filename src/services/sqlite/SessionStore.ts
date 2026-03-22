@@ -9,6 +9,12 @@ import { MigrationRunner } from './migrations/runner.js';
 import type { ObservationRow, SessionSummaryRow } from './types.js';
 import type { PendingMessageStore } from './PendingMessageStore.js';
 import { computeObservationContentHash, findDuplicateObservation } from './observations/store.js';
+import {
+  importSdkSession as _importSdkSession,
+  importSessionSummary as _importSessionSummary,
+  importObservation as _importObservation,
+  importUserPrompt as _importUserPrompt
+} from './import/bulk.js';
 
 /**
  * Session data store for SDK sessions, observations, and summaries
@@ -1531,35 +1537,7 @@ export class SessionStore {
     completed_at_epoch: number | null;
     status: string;
   }): { imported: boolean; id: number } {
-    // Check if session already exists
-    const existing = this.db.prepare(
-      'SELECT id FROM sdk_sessions WHERE content_session_id = ?'
-    ).get(session.content_session_id) as { id: number } | undefined;
-
-    if (existing) {
-      return { imported: false, id: existing.id };
-    }
-
-    const stmt = this.db.prepare(`
-      INSERT INTO sdk_sessions (
-        content_session_id, memory_session_id, project, user_prompt,
-        started_at, started_at_epoch, completed_at, completed_at_epoch, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(
-      session.content_session_id,
-      session.memory_session_id,
-      session.project,
-      session.user_prompt,
-      session.started_at,
-      session.started_at_epoch,
-      session.completed_at,
-      session.completed_at_epoch,
-      session.status
-    );
-
-    return { imported: true, id: result.lastInsertRowid as number };
+    return _importSdkSession(this.db, session);
   }
 
   /**
@@ -1582,41 +1560,7 @@ export class SessionStore {
     created_at: string;
     created_at_epoch: number;
   }): { imported: boolean; id: number } {
-    // Check if summary already exists for this session
-    const existing = this.db.prepare(
-      'SELECT id FROM session_summaries WHERE memory_session_id = ?'
-    ).get(summary.memory_session_id) as { id: number } | undefined;
-
-    if (existing) {
-      return { imported: false, id: existing.id };
-    }
-
-    const stmt = this.db.prepare(`
-      INSERT INTO session_summaries (
-        memory_session_id, project, request, investigated, learned,
-        completed, next_steps, files_read, files_edited, notes,
-        prompt_number, discovery_tokens, created_at, created_at_epoch
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(
-      summary.memory_session_id,
-      summary.project,
-      summary.request,
-      summary.investigated,
-      summary.learned,
-      summary.completed,
-      summary.next_steps,
-      summary.files_read,
-      summary.files_edited,
-      summary.notes,
-      summary.prompt_number,
-      summary.discovery_tokens || 0,
-      summary.created_at,
-      summary.created_at_epoch
-    );
-
-    return { imported: true, id: result.lastInsertRowid as number };
+    return _importSessionSummary(this.db, summary);
   }
 
   /**
@@ -1641,43 +1585,7 @@ export class SessionStore {
     created_at: string;
     created_at_epoch: number;
   }): { imported: boolean; id: number } {
-    // Check if observation already exists
-    const existing = this.db.prepare(`
-      SELECT id FROM observations
-      WHERE memory_session_id = ? AND title = ? AND created_at_epoch = ?
-    `).get(obs.memory_session_id, obs.title, obs.created_at_epoch) as { id: number } | undefined;
-
-    if (existing) {
-      return { imported: false, id: existing.id };
-    }
-
-    const stmt = this.db.prepare(`
-      INSERT INTO observations (
-        memory_session_id, project, text, type, title, subtitle,
-        facts, narrative, concepts, files_read, files_modified,
-        prompt_number, discovery_tokens, created_at, created_at_epoch
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(
-      obs.memory_session_id,
-      obs.project,
-      obs.text,
-      obs.type,
-      obs.title,
-      obs.subtitle,
-      obs.facts,
-      obs.narrative,
-      obs.concepts,
-      obs.files_read,
-      obs.files_modified,
-      obs.prompt_number,
-      obs.discovery_tokens || 0,
-      obs.created_at,
-      obs.created_at_epoch
-    );
-
-    return { imported: true, id: result.lastInsertRowid as number };
+    return _importObservation(this.db, obs);
   }
 
   /**
@@ -1692,31 +1600,6 @@ export class SessionStore {
     created_at: string;
     created_at_epoch: number;
   }): { imported: boolean; id: number } {
-    // Check if prompt already exists
-    const existing = this.db.prepare(`
-      SELECT id FROM user_prompts
-      WHERE content_session_id = ? AND prompt_number = ?
-    `).get(prompt.content_session_id, prompt.prompt_number) as { id: number } | undefined;
-
-    if (existing) {
-      return { imported: false, id: existing.id };
-    }
-
-    const stmt = this.db.prepare(`
-      INSERT INTO user_prompts (
-        content_session_id, prompt_number, prompt_text,
-        created_at, created_at_epoch
-      ) VALUES (?, ?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(
-      prompt.content_session_id,
-      prompt.prompt_number,
-      prompt.prompt_text,
-      prompt.created_at,
-      prompt.created_at_epoch
-    );
-
-    return { imported: true, id: result.lastInsertRowid as number };
+    return _importUserPrompt(this.db, prompt);
   }
 }
