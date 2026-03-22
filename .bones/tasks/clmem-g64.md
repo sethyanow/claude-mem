@@ -10,6 +10,7 @@ priority: 2
 
 
 
+
 ## Context
 
 Original regression from PR #1325 (`38d9ac7a`) introduced a module-level counter that drifted from the process map. The Supervisor refactor (`80a8c90a`, Mar 16) replaced the counter mechanism with `getAll().filter().length`, fixing the original off-by-one.
@@ -81,3 +82,4 @@ Commit referencing clmem-g64.
 - [2026-03-22T07:12:34Z] [Seth] Discovered during clmem-5qq full suite verification. Pre-existing on main and dev. ProcessRegistry singleton count drifts from map — clearRegistry helper doesn't fully reset.
 - [2026-03-22T20:00:00Z] [Bender] Diagnosis: original off-by-one fixed by Supervisor refactor (80a8c90a). Remaining bug: getActiveCount() vs getActiveProcesses() semantic divergence — count includes orphaned entries without runtime refs. Confirmed via instrumented test: inject entry without process ref → count=1, processes=[], clearRegistry leaves count=1. Root cause in ProcessRegistry.ts:99-101. Tests currently pass (12/12) because supervisor.json is clean, but behavior is wrong under orphaned entries.
 - [2026-03-22T20:02:17Z] [Seth] Diagnosis complete. Root cause: getActiveCount() counts ALL registry entries (type=sdk), getActiveProcesses() only returns entries with runtime ChildProcess refs. Orphaned entries inflate count but are invisible to clearRegistry. Fix task updated with 5-step implementation plan. Confidence: HIGH — divergence reproduced directly.
+- [2026-03-22T20:11:43Z] [Seth] Debrief: Fix was mechanical — one expression change in getActiveCount() plus clearRegistry() helper fix. No workarounds, no surprises, no design deviations. Reflections: skeleton accuracy was good, only gap was Step 4 (waitForSlot test) being a regression guard rather than a RED-GREEN cycle since the Step 2 fix already covered it.
