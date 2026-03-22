@@ -1,11 +1,12 @@
 ---
 id: clmem-luq
 title: 'Decompose SessionStore: consolidate migration methods into MigrationRunner'
-status: active
+status: closed
 type: task
 owner: Seth
 parent: clmem-l6j
 ---
+
 
 
 
@@ -76,14 +77,14 @@ Use LSP findReferences on 2-3 representative migration methods before deletion t
 Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SessionStore shows ~800 line reduction.
 
 ## Success Criteria
-- [ ] SessionStore constructor delegates migration work to MigrationRunner (no direct migration SQL)
-- [ ] Migration methods removed from SessionStore (~800 lines reduced)
-- [ ] MigrationRunner handles all migrations previously in SessionStore
-- [ ] SessionStore's only migration path is via MigrationRunner delegation (no residual direct SQL)
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (no new failures beyond baseline 34)
-- [ ] No runtime behavior changes — test verifies all expected tables/columns exist after construction
+- [x] SessionStore constructor delegates migration work to MigrationRunner (no direct migration SQL)
+- [x] Migration methods removed from SessionStore (~800 lines reduced) — 2563→1722 (841 lines)
+- [x] MigrationRunner handles all migrations previously in SessionStore
+- [x] SessionStore's only migration path is via MigrationRunner delegation (no residual direct SQL)
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (no new failures beyond baseline 34) — 1176 pass, 34 fail
+- [x] No runtime behavior changes — test verifies all expected tables/columns exist after construction
 
 ## Anti-Patterns
 - NO changing migration logic — move only, preserve identical behavior
