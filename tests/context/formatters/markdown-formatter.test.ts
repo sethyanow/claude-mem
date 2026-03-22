@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test';
+import { describe, it, expect, mock } from 'bun:test';
 
 // Mock the ModeManager before importing the formatter
 mock.module('../../../src/services/domain/ModeManager.js', () => ({
@@ -103,7 +103,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownHeader('my-project');
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toMatch(/^# \[my-project\] recent context, \d{4}-\d{2}-\d{2} \d{1,2}:\d{2}[ap]m [A-Z]{3,4}$/);
+      expect(result[0]).toMatch(/^# \$CMEM my-project \d{4}-\d{2}-\d{2} \d{1,2}:\d{2}[ap]m [A-Z]{3,4}$/);
       expect(result[1]).toBe('');
     });
 
@@ -116,7 +116,7 @@ describe('MarkdownFormatter', () => {
     it('should handle empty project name', () => {
       const result = renderMarkdownHeader('');
 
-      expect(result[0]).toMatch(/^# \[\] recent context, \d{4}-\d{2}-\d{2} \d{1,2}:\d{2}[ap]m [A-Z]{3,4}$/);
+      expect(result[0]).toMatch(/^# \$CMEM  \d{4}-\d{2}-\d{2} \d{1,2}:\d{2}[ap]m [A-Z]{3,4}$/);
     });
   });
 
@@ -124,56 +124,31 @@ describe('MarkdownFormatter', () => {
     it('should produce legend with type items', () => {
       const result = renderMarkdownLegend();
 
-      expect(result).toHaveLength(2);
-      expect(result[0]).toContain('**Legend:**');
-      expect(result[1]).toBe('');
+      expect(result).toHaveLength(4);
+      expect(result[0]).toContain('Legend:');
+      expect(result[3]).toBe('');
     });
 
-    it('should include session-request in legend', () => {
+    it('should include session marker in legend', () => {
       const result = renderMarkdownLegend();
 
-      expect(result[0]).toContain('session-request');
+      expect(result[0]).toContain('session');
     });
   });
 
   describe('renderMarkdownColumnKey', () => {
-    it('should produce column key explanation', () => {
+    it('should return empty array in compact format', () => {
       const result = renderMarkdownColumnKey();
 
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toContain('**Column Key**');
-    });
-
-    it('should explain Read column', () => {
-      const result = renderMarkdownColumnKey();
-      const joined = result.join('\n');
-
-      expect(joined).toContain('Read');
-      expect(joined).toContain('Tokens to read');
-    });
-
-    it('should explain Work column', () => {
-      const result = renderMarkdownColumnKey();
-      const joined = result.join('\n');
-
-      expect(joined).toContain('Work');
-      expect(joined).toContain('Tokens spent');
+      expect(result).toHaveLength(0);
     });
   });
 
   describe('renderMarkdownContextIndex', () => {
-    it('should produce context index instructions', () => {
+    it('should return empty array (folded into legend)', () => {
       const result = renderMarkdownContextIndex();
 
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toContain('**Context Index:**');
-    });
-
-    it('should mention mem-search skill', () => {
-      const result = renderMarkdownContextIndex();
-      const joined = result.join('\n');
-
-      expect(joined).toContain('mem-search');
+      expect(result).toHaveLength(0);
     });
   });
 
@@ -185,7 +160,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownContextEconomics(economics, config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('25 observations');
+      expect(joined).toContain('25 obs');
     });
 
     it('should include read tokens', () => {
@@ -195,7 +170,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownContextEconomics(economics, config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('1,500 tokens');
+      expect(joined).toContain('1,500t read');
     });
 
     it('should include work investment', () => {
@@ -205,7 +180,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownContextEconomics(economics, config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('10,000 tokens');
+      expect(joined).toContain('10,000t work');
     });
 
     it('should show savings when config has showSavingsAmount', () => {
@@ -215,8 +190,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownContextEconomics(economics, config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('savings');
-      expect(joined).toContain('4,500 tokens');
+      expect(joined).toContain('4,500t saved');
     });
 
     it('should show savings percent when config has showSavingsPercent', () => {
@@ -236,7 +210,8 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownContextEconomics(economics, config);
       const joined = result.join('\n');
 
-      expect(joined).not.toContain('Your savings');
+      expect(joined).not.toContain('saved');
+      expect(joined).not.toContain('savings');
     });
   });
 
@@ -244,46 +219,27 @@ describe('MarkdownFormatter', () => {
     it('should render day as h3 heading', () => {
       const result = renderMarkdownDayHeader('2025-01-01');
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
       expect(result[0]).toBe('### 2025-01-01');
-      expect(result[1]).toBe('');
     });
   });
 
   describe('renderMarkdownFileHeader', () => {
-    it('should render file name in bold', () => {
+    it('should return empty array in compact format', () => {
       const result = renderMarkdownFileHeader('src/index.ts');
 
-      expect(result[0]).toBe('**src/index.ts**');
-    });
-
-    it('should include table headers', () => {
-      const result = renderMarkdownFileHeader('test.ts');
-      const joined = result.join('\n');
-
-      expect(joined).toContain('| ID |');
-      expect(joined).toContain('| Time |');
-      expect(joined).toContain('| T |');
-      expect(joined).toContain('| Title |');
-      expect(joined).toContain('| Read |');
-      expect(joined).toContain('| Work |');
-    });
-
-    it('should include separator row', () => {
-      const result = renderMarkdownFileHeader('test.ts');
-
-      expect(result[2]).toContain('|----');
+      expect(result).toHaveLength(0);
     });
   });
 
   describe('renderMarkdownTableRow', () => {
-    it('should include observation ID with hash prefix', () => {
+    it('should include observation ID', () => {
       const obs = createTestObservation({ id: 42 });
       const config = createTestConfig();
 
       const result = renderMarkdownTableRow(obs, '10:30', config);
 
-      expect(result).toContain('#42');
+      expect(result).toContain('42');
     });
 
     it('should include time display', () => {
@@ -313,25 +269,24 @@ describe('MarkdownFormatter', () => {
       expect(result).toContain('Untitled');
     });
 
-    it('should show read tokens when config enabled', () => {
-      const obs = createTestObservation();
-      const config = createTestConfig({ showReadTokens: true });
+    it('should include type icon', () => {
+      const obs = createTestObservation({ type: 'decision' });
+      const config = createTestConfig();
 
       const result = renderMarkdownTableRow(obs, '10:00', config);
 
-      expect(result).toContain('~');
+      expect(result).toContain('D');
     });
 
-    it('should hide read tokens when config disabled', () => {
-      const obs = createTestObservation();
-      const config = createTestConfig({ showReadTokens: false });
+    it('should produce flat line format', () => {
+      const obs = createTestObservation({ id: 5 });
+      const config = createTestConfig();
 
       const result = renderMarkdownTableRow(obs, '10:00', config);
 
-      // Row should have empty read column
-      const columns = result.split('|');
-      // Find the Read column (5th column, index 5)
-      expect(columns[5].trim()).toBe('');
+      // Compact format: "ID TIME ICON TITLE" — no pipe delimiters
+      expect(result).not.toContain('|');
+      expect(result).toBe('5 10:00 I Test Observation');
     });
 
     it('should use quote mark for repeated time', () => {
@@ -353,7 +308,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownFullObservation(obs, '10:00', 'Detail content', config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('**#7**');
+      expect(joined).toContain('**7**');
       expect(joined).toContain('**Full Observation**');
     });
 
@@ -384,8 +339,9 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownFullObservation(obs, '10:00', null, config);
       const joined = result.join('\n');
 
-      expect(joined).toContain('Read:');
-      expect(joined).toContain('Work:');
+      // Compact format uses ~Nt for read tokens and EMOJI N for work tokens
+      expect(joined).toContain('~');
+      expect(joined).toContain('W 250');
     });
   });
 
@@ -396,7 +352,7 @@ describe('MarkdownFormatter', () => {
       const result = renderMarkdownSummaryItem(summary, '2025-01-01 10:00');
       const joined = result.join('\n');
 
-      expect(joined).toContain('**#S5**');
+      expect(joined).toContain('S5');
     });
 
     it('should include request text', () => {
@@ -480,19 +436,18 @@ describe('MarkdownFormatter', () => {
   });
 
   describe('renderMarkdownFooter', () => {
-    it('should include token amounts', () => {
+    it('should include work token amount', () => {
       const result = renderMarkdownFooter(10000, 500);
       const joined = result.join('\n');
 
       expect(joined).toContain('10k');
-      expect(joined).toContain('500');
     });
 
-    it('should mention claude-mem skill', () => {
+    it('should mention mem-search skill', () => {
       const result = renderMarkdownFooter(5000, 100);
       const joined = result.join('\n');
 
-      expect(joined).toContain('claude-mem');
+      expect(joined).toContain('mem-search');
     });
 
     it('should round work tokens to nearest thousand', () => {
@@ -508,7 +463,7 @@ describe('MarkdownFormatter', () => {
     it('should return helpful message with project name', () => {
       const result = renderMarkdownEmptyState('my-project');
 
-      expect(result).toContain('# [my-project] recent context');
+      expect(result).toContain('$CMEM my-project');
       expect(result).toContain('No previous sessions found');
     });
 
@@ -522,7 +477,8 @@ describe('MarkdownFormatter', () => {
     it('should handle empty project name', () => {
       const result = renderMarkdownEmptyState('');
 
-      expect(result).toContain('# [] recent context');
+      expect(result).toContain('$CMEM');
+      expect(result).toContain('No previous sessions found');
     });
   });
 });
