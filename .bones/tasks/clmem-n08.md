@@ -1,10 +1,11 @@
 ---
 id: clmem-n08
 title: 'Decompose SearchManager: extract shared search execution pattern'
-status: active
+status: closed
 type: task
 parent: clmem-l6j
 ---
+
 
 
 ## Context
@@ -72,13 +73,13 @@ Run test from Step 2. Verify all 8 methods no longer contain inline search logic
 Run `tsc --noEmit`, `bun test`, `npm run build-and-sync`. Verify `wc -l` on SearchManager shows significant line reduction.
 
 ## Success Criteria
-- [ ] Shared search execution function(s) exist in `src/services/worker/search/execute.ts`
-- [ ] 8 search methods refactored to use shared function (no inline Chroma/DB/format logic)
-- [ ] No interface changes to SearchManager's public methods
-- [ ] `tsc --noEmit` exits 0
-- [ ] `npm run build-and-sync` succeeds
-- [ ] All existing tests pass (no new failures beyond baseline 34)
-- [ ] No runtime behavior changes — search results identical before and after
+- [x] Shared search execution function(s) exist in `src/services/worker/search/execute.ts`
+- [x] 8 search methods refactored to use shared function (no inline Chroma/DB/format logic)
+- [x] No interface changes to SearchManager's public methods
+- [x] `tsc --noEmit` exits 0
+- [x] `npm run build-and-sync` succeeds
+- [x] All existing tests pass (no new failures beyond baseline 34)
+- [x] No runtime behavior changes — search results identical before and after
 
 ## Anti-Patterns
 - NO changing search behavior — delegate only, preserve identical runtime results
