@@ -71,67 +71,6 @@ export function createSDKSession(
  * Called by SDKAgent when it captures the session ID from the first SDK message
  * Also used to RESET to null on stale resume failures (worker-service.ts)
  */
-/**
- * Ensures memory_session_id is registered in sdk_sessions before FK-constrained INSERT.
- * Fixes Issue #846 where observations fail after worker restart because the
- * SDK generates a new memory_session_id but it's not registered in the parent table.
- */
-export function ensureMemorySessionIdRegistered(
-  db: Database,
-  sessionDbId: number,
-  memorySessionId: string
-): void {
-  const session = db.prepare(`
-    SELECT id, memory_session_id FROM sdk_sessions WHERE id = ?
-  `).get(sessionDbId) as { id: number; memory_session_id: string | null } | undefined;
-
-  if (!session) {
-    throw new Error(`Session ${sessionDbId} not found in sdk_sessions`);
-  }
-
-  if (session.memory_session_id !== memorySessionId) {
-    db.prepare(`
-      UPDATE sdk_sessions SET memory_session_id = ? WHERE id = ?
-    `).run(memorySessionId, sessionDbId);
-
-    logger.info('DB', 'Registered memory_session_id before storage (FK fix)', {
-      sessionDbId,
-      oldId: session.memory_session_id,
-      newId: memorySessionId
-    });
-  }
-}
-
-/**
- * Get or create a manual session for a project.
- * Manual sessions are used for non-SDK operations (e.g., manual imports).
- */
-export function getOrCreateManualSession(
-  db: Database,
-  project: string
-): string {
-  const memorySessionId = `manual-${project}`;
-  const contentSessionId = `manual-content-${project}`;
-
-  const existing = db.prepare(
-    'SELECT memory_session_id FROM sdk_sessions WHERE memory_session_id = ?'
-  ).get(memorySessionId) as { memory_session_id: string } | undefined;
-
-  if (existing) {
-    return memorySessionId;
-  }
-
-  const now = new Date();
-  db.prepare(`
-    INSERT INTO sdk_sessions (memory_session_id, content_session_id, project, started_at, started_at_epoch, status)
-    VALUES (?, ?, ?, ?, ?, 'active')
-  `).run(memorySessionId, contentSessionId, project, now.toISOString(), now.getTime());
-
-  logger.info('SESSION', 'Created manual session', { memorySessionId, project });
-
-  return memorySessionId;
-}
-
 export function updateMemorySessionId(
   db: Database,
   sessionDbId: number,

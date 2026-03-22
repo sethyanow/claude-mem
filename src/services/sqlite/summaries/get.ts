@@ -32,6 +32,24 @@ export function getSummaryForSession(
 }
 
 /**
+ * Get a single session summary by ID
+ *
+ * @param db - Database instance
+ * @param id - Summary ID
+ * @returns Full summary record or null if not found
+ */
+export function getSummaryById(
+  db: Database,
+  id: number
+): SessionSummaryRow | null {
+  const stmt = db.prepare(`
+    SELECT * FROM session_summaries WHERE id = ?
+  `);
+
+  return (stmt.get(id) as SessionSummaryRow | undefined) || null;
+}
+
+/**
  * Get session summaries by IDs (for hybrid Chroma search)
  * Returns summaries in specified temporal order
  *
